@@ -83,6 +83,31 @@ function PositionsTable({
   );
 }
 
+function TradingViewChart({ symbol }: { symbol: string }) {
+  const tvSymbol = symbol === "USOIL" ? "TVC:USOIL" : `OANDA:${symbol.replace("/", "")}`;
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-line bg-card">
+      <div className="flex items-center justify-between border-b border-line px-5 py-4">
+        <div>
+          <h2 className="font-semibold">{symbol} chart</h2>
+          <p className="mt-1 text-xs text-muted">TradingView interactive chart</p>
+        </div>
+        <span className="rounded-full bg-panel px-2.5 py-1 text-xs font-semibold text-muted">TradingView</span>
+      </div>
+      <div className="h-[520px]">
+        <iframe
+          title={`TradingView ${symbol} chart`}
+          src={`https://www.tradingview.com/widgetembed/?frameElementId=tv_${symbol.replace(/[^a-zA-Z0-9]/g, "")}&symbol=${encodeURIComponent(tvSymbol)}&interval=15&hidesidetoolbar=0&hidetoptoolbar=0&symboledit=1&saveimage=1&toolbarbg=f4f7fb&theme=light&style=1&timezone=Asia%2FKolkata&withdateranges=1&hideideas=1`}
+          className="h-full w-full border-0"
+          loading="lazy"
+          allowFullScreen
+        />
+      </div>
+    </div>
+  );
+}
+
 function MarketWatch({ prices, status, onTrade }: {
   prices: Record<string, number>;
   status: MarketStatus;
