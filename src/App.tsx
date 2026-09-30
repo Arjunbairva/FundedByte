@@ -3,15 +3,17 @@ import { Dashboard, type DashboardTab } from "./components/Dashboard";
 import { AuthModal } from "./components/AuthModal";
 import { Navbar, HomePage, Footer } from "./components/Sections";
 import { CheckoutPage } from "./components/CheckoutPage";
+import { AdminDashboard } from "./components/AdminDashboard";
 import { useStore, signOut } from "./store";
 
-type Route = "home" | "dashboard" | "deposit" | "withdraw";
+type Route = "home" | "dashboard" | "deposit" | "withdraw" | "admin";
 
 const routeFromHash = (): Route => {
   switch (location.hash) {
     case "#/dashboard": return "dashboard";
     case "#/deposit": return "deposit";
     case "#/withdraw": return "withdraw";
+    case "#/admin": return "admin";
     default: return "home";
   }
 };
@@ -47,6 +49,11 @@ export default function App() {
   const goDashboard = () => navigate("dashboard");
   const goDeposit = () => navigate("deposit");
   const goWithdraw = () => navigate("withdraw");
+  const goAdmin = () => navigate("admin");
+
+  if (route === "admin" && user) {
+    return <AdminDashboard onHome={goHome} onLogout={() => { signOut(); goHome(); }} />;
+  }
 
   if (route === "dashboard" && user && hasStartedFunding) {
     return <Dashboard tab={dashboardTab} onTabChange={setDashboardTab} onHome={goHome} onDeposit={goDeposit} onWithdraw={goWithdraw} onLogout={() => { signOut(); goHome(); }} />;
