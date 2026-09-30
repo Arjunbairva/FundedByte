@@ -22,10 +22,12 @@ const navigate = (route: Route) => {
 };
 
 export default function App() {
-  const { user, ready } = useStore();
+  const { user, deposits, ready } = useStore();
   const [route, setRoute] = useState<Route>(routeFromHash());
   const [auth, setAuth] = useState<"login" | "signup" | null>(null);
   const [dashboardTab, setDashboardTab] = useState<DashboardTab>("overview");
+
+  const hasStartedFunding = deposits.length > 0;
 
   useEffect(() => {
     const onHash = () => setRoute(routeFromHash());
@@ -34,20 +36,24 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (ready && route !== "home" && !user) setAuth("login");
-  }, [ready, route, user]);
+    if (!ready || !user || route === "home") return;
+
+    if (route === "dashboard" && !hasStartedFunding) {
+      navigate("deposit");
+    }
+  }, [ready, user, route, hasStartedFunding]);
 
   const goHome = () => navigate("home");
   const goDashboard = () => navigate("dashboard");
   const goDeposit = () => navigate("deposit");
   const goWithdraw = () => navigate("withdraw");
 
-  if (route === "dashboard" && user) {
+  if (route === "dashboard" && user && hasStartedFunding) {
     return <Dashboard tab={dashboardTab} onTabChange={setDashboardTab} onHome={goHome} onDeposit={goDeposit} onWithdraw={goWithdraw} onLogout={() => { signOut(); goHome(); }} />;
   }
 
   if (route === "deposit" && user) {
-    return <CheckoutPage mode="deposit" onBack={goDashboard} onComplete={goDashboard} />;
+    return <CheckoutPage mode="deposit" onBack={goHome} onComplete={goDashboard} />;
   }
 
   if (route === "withdraw" && user) {
