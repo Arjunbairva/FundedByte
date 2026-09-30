@@ -14,6 +14,7 @@ function secretKey() {
   return process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 }
 
+// Production admin access is controlled by the Vercel ADMIN_EMAILS allowlist.
 function adminEmails() {
   return String(process.env.ADMIN_EMAILS || "").split(",").map(value => value.trim().toLowerCase()).filter(Boolean);
 }
