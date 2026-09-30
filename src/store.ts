@@ -151,6 +151,7 @@ export const useStore = () => useSyncExternalStore(
 supabase.auth.getSession().then(async ({ data: { session } }) => {
   const user = session?.user.email ?? null;
   const remote = user ? await loadRemote(user) : null;
+  remoteReady = Boolean(remote);
   state = { ...(remote ?? (user ? loadPersisted(user) : blankState)), user, ready: true };
   emit();
 });
@@ -166,6 +167,16 @@ supabase.auth.onAuthStateChange(async (_event, session) => {
 export async function signIn(email: string, password: string) {
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   return { error: error?.message, confirm: false };
+}
+
+export async function signInWithGoogle() {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${window.location.origin}/#/deposit`,
+    },
+  });
+  return { error: error?.message };
 }
 
 export async function signUp(email: string, password: string) {
