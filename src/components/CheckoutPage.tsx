@@ -8,7 +8,10 @@ export function CheckoutPage({ program, onBack }: { program: Program; onBack: ()
   const [promoMsg, setPromoMsg] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
-  const total = program.fee;
+  const normalizedPromo = promo.trim().toUpperCase();
+  const promoValid = normalizedPromo === "BYTES29";
+  const discount = promoValid ? program.fee * 0.29 : 0;
+  const total = program.fee - discount;
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -87,10 +90,10 @@ export function CheckoutPage({ program, onBack }: { program: Program; onBack: ()
                   <div className="mt-3 flex gap-2">
                     <input value={promo} onChange={e => { setPromo(e.target.value); setPromoMsg(null); }} placeholder="Enter code"
                       className="min-w-0 flex-1 rounded-lg border border-line bg-panel px-3 py-3 text-sm outline-none focus:border-brand" />
-                    <button type="button" onClick={() => setPromoMsg(promo.trim() ? "No promotional codes are active right now." : "Enter a code first.")}
+                    <button type="button" onClick={() => setPromoMsg(promoValid ? "Bytes29 applied — 29% off." : (promo.trim() ? "Invalid promo code." : "Enter a code first."))}
                       className="rounded-lg border border-line bg-card px-4 py-3 text-sm font-semibold hover:border-fg">Apply</button>
                   </div>
-                  {promoMsg && <p role="status" className="mt-2 text-xs text-muted">{promoMsg}</p>}
+                  {promoMsg && <p role="status" className={`mt-2 text-xs ${promoValid ? "text-green-600" : "text-muted"}`}>{promoMsg}</p>}
                 </section>
 
                 <label className="flex gap-3 rounded-2xl border border-line bg-card p-5 text-sm">
@@ -112,11 +115,12 @@ export function CheckoutPage({ program, onBack }: { program: Program; onBack: ()
               <h2 className="text-lg font-semibold">Order summary</h2>
               <div className="mt-5 space-y-3 text-sm">
                 <div className="flex justify-between gap-4"><span className="text-muted">{usd(program.balance)} evaluation</span><span>{usd(program.fee)}</span></div>
+                {promoValid && <div className="flex justify-between gap-4 text-green-600"><span>Bytes29 discount (29%)</span><span>−{usd(discount, 2)}</span></div>}
               </div>
               <div className="my-5 border-t border-line" />
               <div className="flex items-end justify-between gap-4">
                 <span className="font-semibold">Total</span>
-                <span className="font-display text-3xl font-bold">{usd(total)}</span>
+                <span className="font-display text-3xl font-bold">{usd(total, 2)}</span>
               </div>
               <div className="mt-6 rounded-xl bg-panel p-4 text-sm">
                 <p className="font-semibold">What happens next?</p>
