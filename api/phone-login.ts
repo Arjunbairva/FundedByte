@@ -78,7 +78,7 @@ export default async function handler(req: any, res: any) {
   }
 
   const secretKey = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "https://dedgyznbbmkfssnrpjqg.supabase.co";
   if (!secretKey || !supabaseUrl) {
     json(res, 500, { error: "Phone login is not configured on the server." });
     return;
