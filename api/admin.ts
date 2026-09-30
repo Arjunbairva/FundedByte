@@ -103,13 +103,6 @@ export default async function handler(req: any, res: any) {
       return;
     }
 
-    const action = String(req.body?.action || "");
-    const transactionId = String(req.body?.transactionId || "");
-    if (!transactionId) {
-      json(res, 400, { error: "Transaction ID is required." });
-      return;
-    }
-
     if (action !== "approve" && action !== "reject") {
       json(res, 400, { error: "Unsupported admin action." });
       return;
