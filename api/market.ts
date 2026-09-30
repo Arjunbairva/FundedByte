@@ -18,8 +18,8 @@ export default async function handler(req: any, res: any) {
     .split(",")
     .map((s: string) => s.trim())
     .filter((s: string) => ALLOWED.has(s));
-
   const symbols = [...new Set(requested)];
+
   if (!symbols.length) {
     res.status(400).json({ error: "Provide at least one supported symbol." });
     return;
@@ -28,28 +28,35 @@ export default async function handler(req: any, res: any) {
   const url = new URL("https://api.twelvedata.com/price");
   url.searchParams.set("symbol", symbols.join(","));
   url.searchParams.set("apikey", key);
+  url.searchParams.set("dp", "8");
 
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, { headers: { Accept: "application/json" } });
     const payload = await response.json();
 
-    if (!response.ok) {
-      res.status(response.status).json({ error: payload?.message || "Twelve Data request failed." });
+    if (!response.ok || payload?.status === "error") {
+      res.status(response.ok ? 502 : response.status).json({
+        error: payload?.message || "Twelve Data request failed.",
+      });
       return;
     }
 
-    const rows: MarketRow[] = symbols.map((symbol) => {
-      const item = payload?.[symbol] ?? payload;
-      const price = Number(item?.price);
+    const rows: MarketRow[] = symbols.map(symbol => {
+      const raw = payload?.[symbol] ?? payload?.data?.[symbol] ?? payload;
+      const value = Number(raw?.price ?? raw?.close ?? raw?.value);
       return {
         symbol,
-        price: Number.isFinite(price) ? price : null,
-        ...(item?.message ? { error: item.message } : {}),
+        price: Number.isFinite(value) ? value : null,
+        ...(raw?.message ? { error: String(raw.message) } : {}),
       };
     });
 
     res.setHeader("Cache-Control", "no-store, max-age=0");
-    res.status(200).json({ source: "Twelve Data", updatedAt: new Date().toISOString(), data: rows });
+    res.status(200).json({
+      source: "Twelve Data",
+      updatedAt: new Date().toISOString(),
+      data: rows,
+    });
   } catch {
     res.status(502).json({ error: "Unable to reach Twelve Data." });
   }
