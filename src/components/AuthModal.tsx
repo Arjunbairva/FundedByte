@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { Dialog } from "./Dialog";
-import { signIn, signInWithGoogle, signUp } from "../store";
+import { sendPhoneOtp, signIn, signInWithGoogle, signUp, verifyPhoneOtp } from "../store";
 
 export function AuthModal({ mode, onClose, setMode }: { mode: "login" | "signup" | null; onClose: () => void; setMode: (m: "login" | "signup") => void }) {
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const [phoneMode, setPhoneMode] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [phone, setPhone] = useState("");
   const login = mode === "login";
   const input = "w-full rounded-xl border border-line bg-panel px-3.5 py-3 text-sm outline-none focus:border-brand";
 
@@ -16,6 +19,23 @@ export function AuthModal({ mode, onClose, setMode }: { mode: "login" | "signup"
     if (result.error) {
       setBusy(false);
       setMessage(result.error);
+    }
+  };
+
+  const phoneSubmit = async () => {
+    setBusy(true);
+    setMessage(null);
+    const result = otpSent
+      ? await verifyPhoneOtp(phone, document.getElementById("fundedbytes-phone-otp") instanceof HTMLInputElement ? document.getElementById("fundedbytes-phone-otp")!.value.trim() : "")
+      : await sendPhoneOtp(phone.trim());
+    setBusy(false);
+    if (result.error) return setMessage(result.error);
+    if (otpSent) {
+      onClose();
+      location.hash = "#/deposit";
+    } else {
+      setOtpSent(true);
+      setMessage("OTP sent. Enter the 6-digit code.");
     }
   };
 
@@ -46,6 +66,52 @@ export function AuthModal({ mode, onClose, setMode }: { mode: "login" | "signup"
           <p className="font-semibold">Check your email to confirm your account.</p>
           <p className="text-muted">After confirmation, return here and log in.</p>
           <button className="w-full rounded-xl border border-line px-4 py-3 font-semibold" onClick={() => { setConfirmed(false); setMode("login"); }}>Back to login</button>
+        </div>
+      ) : phoneMode ? (
+        <div className="space-y-4">
+          <div>
+            <p className="text-sm font-medium">Phone number</p>
+            <input
+              value={phone}
+              onChange={e => setPhone(e.target.value)}
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              placeholder="+91 9876543210"
+              disabled={otpSent}
+              className={input + " mt-2"}
+            />
+            <p className="mt-1 text-xs text-muted">Use international format, e.g. +91...</p>
+          </div>
+          {otpSent && (
+            <div>
+              <p className="text-sm font-medium">Verification code</p>
+              <input
+                id="fundedbytes-phone-otp"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                placeholder="123456"
+                className={input + " mt-2"}
+              />
+            </div>
+          )}
+          {message && <p className="text-sm text-loss" role="alert">{message}</p>}
+          <button type="button" disabled={busy || !phone.trim()} onClick={phoneSubmit} className="w-full rounded-xl bg-brand py-3.5 font-semibold text-white hover:bg-brand2 disabled:opacity-60">
+            {busy ? "Please wait…" : otpSent ? "Verify & continue" : "Send OTP"}
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => { setPhoneMode(true); setMessage(null); setOtpSent(false); }}
+            className="w-full rounded-xl border border-line px-4 py-3 font-semibold hover:bg-slate-50 disabled:opacity-60"
+          >
+            Continue with phone
+          </button>
+          <button type="button" className="w-full text-xs text-muted hover:text-fg" onClick={() => { setPhoneMode(false); setOtpSent(false); setMessage(null); }}>
+            Back to email / Google
+          </button>
         </div>
       ) : (
         <form onSubmit={submit} className="space-y-4">
