@@ -4,12 +4,12 @@ export const siteConfig = {
 };
 
 export const instruments = [
-  { symbol: "EUR/USD", name: "Euro / US Dollar", type: "Forex", digits: 5, base: 1.17482, spread: 0.00012, change: 0.38 },
-  { symbol: "GBP/USD", name: "British Pound / US Dollar", type: "Forex", digits: 5, base: 1.34261, spread: 0.00015, change: 0.22 },
-  { symbol: "USD/JPY", name: "US Dollar / Japanese Yen", type: "Forex", digits: 3, base: 147.228, spread: 0.018, change: -0.16 },
-  { symbol: "XAU/USD", name: "Gold / US Dollar", type: "Commodity", digits: 2, base: 3865.42, spread: 0.22, change: 0.71 },
-  { symbol: "XAG/USD", name: "Silver / US Dollar", type: "Commodity", digits: 3, base: 46.128, spread: 0.035, change: 0.54 },
-  { symbol: "USOIL", name: "WTI Crude Oil", type: "Commodity", digits: 2, base: 63.48, spread: 0.05, change: -0.31 },
+  { symbol: "EUR/USD", name: "Euro / US Dollar", type: "Forex", digits: 5, base: 1.17482, change: 0.38 },
+  { symbol: "GBP/USD", name: "British Pound / US Dollar", type: "Forex", digits: 5, base: 1.34261, change: 0.22 },
+  { symbol: "USD/JPY", name: "US Dollar / Japanese Yen", type: "Forex", digits: 3, base: 147.228, change: -0.16 },
+  { symbol: "XAU/USD", name: "Gold / US Dollar", type: "Commodity", digits: 2, base: 3865.42, change: 0.71 },
+  { symbol: "XAG/USD", name: "Silver / US Dollar", type: "Commodity", digits: 3, base: 46.128, change: 0.54 },
+  { symbol: "USOIL", name: "WTI Crude Oil", type: "Commodity", digits: 2, base: 63.48, change: -0.31 },
 ];
 
 export const depositLimits = {
