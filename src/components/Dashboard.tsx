@@ -108,30 +108,57 @@ function TradingViewChart({ symbol }: { symbol: string }) {
   );
 }
 
-function MarketWatch({ prices, status, onTrade }: {
-  prices: Record<string, number>;
-  status: MarketStatus;
-  onTrade: (symbol: string) => void;
-}) {
+function TradingViewMarketData({ onTrade }: { onTrade: (symbol: string) => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const host = ref.current;
+    if (!host) return;
+    host.innerHTML = "";
+
+    const widget = document.createElement("tv-market-data");
+    widget.setAttribute("symbol-sectors", JSON.stringify([
+      {
+        sectionName: "Forex",
+        symbols: ["FX:EURUSD", "FX:GBPUSD", "FX:USDJPY"],
+      },
+      {
+        sectionName: "Commodities",
+        symbols: ["OANDA:XAUUSD", "OANDA:XAGUSD", "TVC:USOIL"],
+      },
+    ]));
+    host.appendChild(widget);
+
+    if (!document.querySelector('script[src="https://widgets.tradingview-widget.com/w/en/tv-market-data.js"]')) {
+      const script = document.createElement("script");
+      script.type = "module";
+      script.src = "https://widgets.tradingview-widget.com/w/en/tv-market-data.js";
+      document.head.appendChild(script);
+    }
+
+    return () => {
+      if (host) host.innerHTML = "";
+    };
+  }, []);
+
   return (
     <section className="rounded-2xl border border-line bg-card">
       <div className="flex items-center justify-between border-b border-line px-5 py-4">
-        <div><h2 className="font-semibold">Market watch</h2><p className="mt-1 text-xs text-muted">Twelve Data prices · refreshed every 60 seconds</p></div>
-        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${status === "live" ? "bg-green-50 text-green-700" : "bg-panel text-muted"}`}>{status === "live" ? "LIVE" : status === "loading" ? "CONNECTING" : "UNAVAILABLE"}</span>
+        <div>
+          <h2 className="font-semibold">Live Market Watch</h2>
+          <p className="mt-1 text-xs text-muted">Real-time market data powered by TradingView</p>
+        </div>
+        <span className="rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700">LIVE</span>
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[650px] text-sm">
-          <thead className="bg-panel text-muted"><tr>{["Instrument","Type","Price","Action"].map(h => <th key={h} className="p-4 text-left font-medium">{h}</th>)}</tr></thead>
-          <tbody>{instruments.map(item => {
-            const price = prices[item.symbol];
-            return <tr key={item.symbol} className="border-t border-line">
-              <td className="p-4 font-semibold">{item.symbol}<span className="ml-2 text-xs font-normal text-muted">{item.name}</span></td>
-              <td className="p-4 text-muted">{item.type}</td>
-              <td className="p-4 font-display font-semibold tabular-nums">{price === undefined ? "—" : price.toFixed(item.digits)}</td>
-              <td className="p-4"><button disabled={price === undefined} onClick={() => onTrade(item.symbol)} className="rounded-lg bg-brand px-3 py-2 text-xs font-semibold text-white hover:bg-brand2 disabled:cursor-not-allowed disabled:opacity-40">Trade</button></td>
-            </tr>;
-          })}</tbody>
-        </table>
+      <div ref={ref} className="min-h-[430px] w-full overflow-hidden" />
+      <div className="border-t border-line px-5 py-4">
+        <div className="flex flex-wrap gap-2">
+          {instruments.map(item => (
+            <button key={item.symbol} onClick={() => onTrade(item.symbol)} className="rounded-lg border border-line px-3 py-2 text-xs font-semibold hover:border-brand hover:text-brand">
+              Trade {item.symbol}
+            </button>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -260,7 +287,7 @@ export function Dashboard({ tab, onTabChange, onHome, onDeposit, onWithdraw, onL
 
           <div className="mt-8 flex gap-2 overflow-x-auto border-b border-line pb-2 lg:hidden">{([["overview","Overview"],["open","Open Positions"],["closed","Closed Positions"],["transactions","Transactions"]] as const).map(([id,label]) => <button key={id} onClick={() => onTabChange(id)} className={`whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold ${tab === id ? "bg-brand text-white" : "border border-line bg-card"}`}>{label}</button>)}</div>
 
-          {tab === "overview" && <div className="mt-8 space-y-6"><MarketWatch prices={prices} status={marketStatus} onTrade={setTradeSymbol} /><TradingViewChart symbol={tradeSymbol ?? "XAU/USD"} /><div className="grid gap-6 xl:grid-cols-[1.5fr_.8fr]"><section><div className="mb-4 flex items-center justify-between"><h2 className="text-lg font-semibold">Open Positions</h2><button onClick={() => onTabChange("open")} className="text-sm font-semibold text-brand">View all</button></div><PositionsTable rows={liveOpen.slice(0,4)} open onClose={closeLivePosition} prices={prices} /></section><section className="rounded-2xl border border-line bg-card p-5"><h2 className="text-lg font-semibold">Account snapshot</h2><div className="mt-5 space-y-4 text-sm">{[["Open positions",String(liveOpen.length)],["Closed positions",String(closedPositions.length)],["Base currency","USD"],["Trading status","Paper"]].map(([k,v]) => <div key={k} className="flex justify-between border-b border-line pb-3 last:border-0"><span className="text-muted">{k}</span><span className="font-semibold">{v}</span></div>)}</div></section></div></div>}
+          {tab === "overview" && <div className="mt-8 space-y-6"><TradingViewMarketData onTrade={setTradeSymbol} /><TradingViewChart symbol={tradeSymbol ?? "XAU/USD"} /><div className="grid gap-6 xl:grid-cols-[1.5fr_.8fr]"><section><div className="mb-4 flex items-center justify-between"><h2 className="text-lg font-semibold">Open Positions</h2><button onClick={() => onTabChange("open")} className="text-sm font-semibold text-brand">View all</button></div><PositionsTable rows={liveOpen.slice(0,4)} open onClose={closeLivePosition} prices={prices} /></section><section className="rounded-2xl border border-line bg-card p-5"><h2 className="text-lg font-semibold">Account snapshot</h2><div className="mt-5 space-y-4 text-sm">{[["Open positions",String(liveOpen.length)],["Closed positions",String(closedPositions.length)],["Base currency","USD"],["Trading status","Paper"]].map(([k,v]) => <div key={k} className="flex justify-between border-b border-line pb-3 last:border-0"><span className="text-muted">{k}</span><span className="font-semibold">{v}</span></div>)}</div></section></div></div>}
 
           {tab === "open" && <section className="mt-8 space-y-6"><MarketWatch prices={prices} status={marketStatus} onTrade={setTradeSymbol} /><div><h2 className="mb-4 text-lg font-semibold">Open Positions</h2><PositionsTable rows={liveOpen} open onClose={closeLivePosition} prices={prices} /></div></section>}
           {tab === "closed" && <section className="mt-8"><h2 className="mb-4 text-lg font-semibold">Closed Positions</h2><PositionsTable rows={closedPositions} open={false} prices={prices} /></section>}
