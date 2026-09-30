@@ -93,7 +93,7 @@ export default async function handler(req: any, res: any) {
     const verified = await readVerifiedEmail(userJsonUrl);
     const hashedEmail = await emailHash(verified.email);
     const internalEmail = `email_${hashedEmail}@email.fundedbytes.local`;
-    const password = `${crypto.randomUUID()}-${crypto.randomUUID()}`;
+    const password = `${crypto.randomUUID()}${crypto.randomUUID()}`;
 
     const admin = createClient(SUPABASE_URL, secretKey, {
       auth: {
