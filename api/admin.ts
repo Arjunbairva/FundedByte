@@ -42,7 +42,7 @@ function adminEmails() {
     // Support the normal comma/newline/semicolon format below.
   }
 
-  values.push(...raw.split(/[;,\\n]/));
+  values.push(...raw.split(/[;,\n]/));
 
   return [...new Set(values.map(value => normalizeEmail(value)).filter(Boolean))];
 }
