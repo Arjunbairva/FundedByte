@@ -98,7 +98,7 @@ async function requireAdmin(req: any) {
 async function loadOverview(client: ReturnType<typeof createClient>) {
   const [{ data: accounts, error: accountsError }, { data: transactions, error: transactionsError }, { data: positions, error: positionsError }] =
     await Promise.all([
-      client.from("accounts").select("id,user_id,account_number,balance,created_at,updated_at").order("created_at", { ascending: false }),
+      client.from("accounts").select("id,user_id,balance,created_at,updated_at").order("created_at", { ascending: false }),
       client.from("transactions").select("*").order("created_at", { ascending: false }),
       client.from("positions").select("*").order("opened_at", { ascending: false }),
     ]);
