@@ -26,10 +26,25 @@ function normalizeEmail(value: unknown) {
 }
 
 function adminEmails() {
-  return String(process.env.ADMIN_EMAILS || "")
-    .split(/[;,\\n]/)
-    .map(normalizeEmail)
-    .filter(Boolean);
+  const raw = String(process.env.ADMIN_EMAILS || "").trim();
+  if (!raw) return [];
+
+  const values: string[] = [];
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      values.push(...parsed.map(value => String(value ?? "")));
+    } else if (typeof parsed === "string") {
+      values.push(parsed);
+    }
+  } catch {
+    // Support the normal comma/newline/semicolon format below.
+  }
+
+  values.push(...raw.split(/[;,\\n]/));
+
+  return [...new Set(values.map(value => normalizeEmail(value)).filter(Boolean))];
 }
 
 async function requireAdmin(req: any) {
