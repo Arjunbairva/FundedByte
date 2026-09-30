@@ -1,6 +1,7 @@
 export const siteConfig = {
   brandName: "FundedBytes",
   tagline: "Global markets. One simple trading account.",
+  tradingTerms: { spread: "Zero Spread", swap: "Zero Swap" },
 };
 
 export const instruments = [
