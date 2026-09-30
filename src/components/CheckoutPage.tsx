@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { usd, type Program } from "../config";
 import { Logo } from "./Sections";
 
@@ -10,7 +10,7 @@ export function CheckoutPage({ program, onBack }: { program: Program; onBack: ()
 
   const total = program.fee;
 
-  const submit = (e: React.FormEvent) => {
+  const submit = (e: FormEvent) => {
     e.preventDefault();
     if (!accepted) return;
     setSubmitted(true);
