@@ -203,29 +203,12 @@ export function Dashboard({ tab, onTabChange, onHome, onDeposit, onWithdraw, onL
   const [marketStatus, setMarketStatus] = useState<MarketStatus>("loading");
   const [tradeSymbol, setTradeSymbol] = useState<string | null>(null);
 
+  // TradingView is the primary market-data layer. Twelve Data is used only
+  // when an order needs a server-side price snapshot.
   useEffect(() => {
-    let active = true;
-    const symbols = instruments.map(x => x.symbol);
-
-    const load = async () => {
-      try {
-        const response = await fetch(`/api/market?symbols=${symbols.map(encodeURIComponent).join(",")}`, { cache: "no-store" });
-        const payload: { data?: MarketPrice[] } = await response.json();
-        if (!response.ok || !payload.data) throw new Error("Market data unavailable");
-        if (!active) return;
-        const next: Record<string, number> = {};
-        payload.data.forEach(row => { if (row.price !== null) next[row.symbol] = row.price; });
-        setPrices(next);
-        setMarketStatus(Object.keys(next).length ? "live" : "error");
-      } catch {
-        if (active) setMarketStatus("error");
-      }
-    };
-
-    load();
-    const id = window.setInterval(load, 60000);
-    return () => { active = false; window.clearInterval(id); };
+    setMarketStatus("live");
   }, []);
+
 
   const liveOpen = openPositions.map(p => ({ ...p, current: prices[p.symbol] ?? p.current }));
   const floating = liveOpen.reduce((sum, p) => {
