@@ -19,9 +19,9 @@ function normalizeEmail(value: unknown) {
   return String(value ?? "")
     .normalize("NFKC")
     .replace(/[\u200B-\u200D\uFEFF]/g, "")
-    .trim()
+    .replace(/\s+/g, "")
+    .replace(/^ADMIN_EMAILS\s*=\s*/i, "")
     .replace(/^["'`]+|["'`]+$/g, "")
-    .trim()
     .toLowerCase();
 }
 
@@ -80,9 +80,7 @@ async function requireAdmin(req: any) {
   // Prefer the verified identity supplied by Phone.Email for this project.
   // The browser never controls this value; it comes from the authenticated
   // Supabase user record returned by getUser(accessToken).
-  const verifiedEmail = normalizeEmail(data.user.user_metadata?.verified_email);
-  const primaryIdentity = verifiedEmail || normalizeEmail(data.user.email);
-  const isAllowed = Boolean(primaryIdentity && configuredAdminEmails.includes(primaryIdentity));
+  const isAllowed = candidates.some(email => configuredAdminEmails.includes(email));
 
   if (!isAllowed) {
     const forbidden: any = new Error(
