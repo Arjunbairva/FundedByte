@@ -7,7 +7,6 @@ export function AuthModal({ mode, onClose, setMode }: { mode: "login" | "signup"
   const [busy, setBusy] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [phoneMode, setPhoneMode] = useState(false);
-  const [phone, setPhone] = useState("");
   const login = mode === "login";
   const input = "w-full rounded-xl border border-line bg-panel px-3.5 py-3 text-sm outline-none focus:border-brand";
 
@@ -108,6 +107,7 @@ export function AuthModal({ mode, onClose, setMode }: { mode: "login" | "signup"
       ) : phoneMode ? (
         <div className="space-y-4">
           <div className="pe_signin_button min-h-12" data-client-id="11551551168649638491"></div>
+          {message && <p className="text-sm text-loss" role="alert">{message}</p>}
           <div className="rounded-xl border border-line bg-panel px-4 py-4 text-sm">
             <p className="font-semibold">Continue with Phone</p>
             <p className="mt-1 text-muted">Verify your mobile number securely with Phone.Email.</p>
