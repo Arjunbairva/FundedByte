@@ -27,17 +27,17 @@ export default function App() {
     <>
       {onDash && !ready ? <p className="p-10 text-muted">Loading…</p> : onDash && user ? <Dashboard onHome={toHome} /> : (<>
         <Navbar user={user} onLogin={() => setAuth("login")} onStart={() => buy(popular)} onDash={toDash} onLogout={signOut} />
-        <main>
+        <main id="main">
           <Hero onStart={() => buy(popular)} />
           <Programs onBuy={buy} />
           <HowItWorks />
           <Features />
-          <Rules onViewRules={() => document.getElementById("rules")?.scrollIntoView({ behavior: "smooth" })} />
+          <Rules />
           <ProfitSplit />
           <FAQ />
           <CTA onStart={() => buy(popular)} />
         </main>
-        <Footer onStart={() => buy(popular)} />
+        <Footer />
       </>)}
       <CheckoutModal program={checkout} onClose={() => setCheckout(null)} onDone={async p => { const err = await addAccount(p); if (err) alert(err); else toDash(); }} />
       <AuthModal mode={auth} setMode={setAuth} onClose={() => setAuth(null)} onAuthed={authed} />

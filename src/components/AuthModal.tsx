@@ -25,8 +25,8 @@ export function AuthModal({ mode, onClose, setMode, onAuthed }: { mode: "login" 
         <form onSubmit={submit} className="space-y-4">
           <label className="block text-sm">Email<input required name="email" type="email" autoComplete="email" className={input + " mt-1"} /></label>
           <label className="block text-sm">Password<input required name="password" type="password" minLength={6} autoComplete={login ? "current-password" : "new-password"} className={input + " mt-1"} /></label>
-          {msg && <p role="alert" className="text-sm text-red-400">{msg}</p>}
-          <button disabled={busy} className="w-full rounded-lg bg-brand py-3 font-semibold text-ink hover:bg-brand2 disabled:opacity-60">{busy ? "Please wait…" : login ? "Login" : "Create Account"}</button>
+          {msg && <p role="alert" className="text-sm text-loss">{msg}</p>}
+          <button disabled={busy} className="w-full rounded-lg bg-brand py-3 font-semibold text-white hover:bg-brand2 disabled:opacity-60">{busy ? "Please wait…" : login ? "Login" : "Create Account"}</button>
           <button type="button" onClick={() => { setMsg(null); setMode(login ? "signup" : "login"); }} className="w-full text-xs text-muted hover:text-fg">
             {login ? "New here? Create an account" : "Already have an account? Login"}
           </button>
