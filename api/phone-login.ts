@@ -1,4 +1,3 @@
-import { createHash, randomBytes } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 
 const PHONE_EMAIL_HOST = "user.phone.email";
@@ -55,6 +54,11 @@ async function readVerifiedPhone(userJsonUrl: string) {
   };
 }
 
+async function phoneHash(phone: string) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(phone));
+  return Array.from(new Uint8Array(digest)).map(byte => byte.toString(16).padStart(2, "0")).join("");
+}
+
 async function findUserByEmail(admin: ReturnType<typeof createClient>, email: string) {
   for (let page = 1; page <= 100; page += 1) {
     const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
@@ -88,9 +92,9 @@ export default async function handler(req: any, res: any) {
 
   try {
     const verified = await readVerifiedPhone(userJsonUrl);
-    const phoneHash = createHash("sha256").update(verified.phone).digest("hex");
-    const email = `phone_${phoneHash}@phone.fundedbytes.local`;
-    const password = randomBytes(32).toString("base64url");
+    const hashedPhone = await phoneHash(verified.phone);
+    const email = `phone_${hashedPhone}@phone.fundedbytes.local`;
+    const password = `${crypto.randomUUID()}-${crypto.randomUUID()}`;
 
     const admin = createClient(supabaseUrl, secretKey, {
       auth: {
