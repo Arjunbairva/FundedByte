@@ -20,8 +20,34 @@ async function adminRequest(path: string, init?: RequestInit) {
     headers: { ...(init?.headers || {}), Authorization: `Bearer ${token}` },
     cache: "no-store",
   });
-  const payload = await response.json();
-  if (!response.ok) throw new Error(payload.error || "Admin request failed.");
+  const contentType = response.headers.get("content-type") || "";
+  const raw = await response.text();
+  let payload: any = null;
+
+  if (raw) {
+    if (contentType.includes("application/json")) {
+      try {
+        payload = JSON.parse(raw);
+      } catch {
+        payload = null;
+      }
+    } else {
+      try {
+        payload = JSON.parse(raw);
+      } catch {
+        payload = { error: raw };
+      }
+    }
+  }
+
+  if (!response.ok) {
+    throw new Error(payload?.error || "Admin request failed.");
+  }
+
+  if (!payload || typeof payload !== "object") {
+    throw new Error("Admin API returned an invalid response.");
+  }
+
   return payload;
 }
 
