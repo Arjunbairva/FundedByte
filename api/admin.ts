@@ -18,7 +18,7 @@ function secretKey() {
 function normalizeEmail(value: unknown) {
   return String(value ?? "")
     .normalize("NFKC")
-    .replace(/[\\u200B-\\u200D\\uFEFF]/g, "")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
     .trim()
     .toLowerCase();
 }
@@ -58,8 +58,15 @@ async function requireAdmin(req: any) {
     data.user.user_metadata?.email,
   ].map(normalizeEmail).filter(Boolean);
 
-  if (!candidates.some(email => adminEmails().includes(email))) {
-    const forbidden: any = new Error("Admin access denied.");
+  const configuredAdminEmails = adminEmails();
+  const isAllowed = candidates.some(email => configuredAdminEmails.includes(email));
+
+  if (!isAllowed) {
+    const forbidden: any = new Error(
+      configuredAdminEmails.length
+        ? "Admin access denied: the signed-in identity is not in the Production ADMIN_EMAILS allowlist."
+        : "Admin access denied: ADMIN_EMAILS is not available to this Production function."
+    );
     forbidden.status = 403;
     throw forbidden;
   }
