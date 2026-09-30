@@ -2,6 +2,8 @@ import { useSyncExternalStore } from "react";
 import { supabase } from "./supabase";
 import type { ClosedPosition, DepositMethod, Position, WithdrawalMethod } from "./config";
 
+export type { ClosedPosition, Position } from "./config";
+
 interface Deposit {
   id: string;
   method: DepositMethod;
@@ -67,7 +69,7 @@ supabase.auth.onAuthStateChange((_event, session) => {
 
 export async function signIn(email: string, password: string) {
   const { error } = await supabase.auth.signInWithPassword({ email, password });
-  return { error: error?.message };
+  return { error: error?.message, confirm: false };
 }
 
 export async function signUp(email: string, password: string) {
