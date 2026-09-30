@@ -179,16 +179,6 @@ export async function signInWithGoogle() {
   return { error: error?.message };
 }
 
-export async function sendPhoneOtp(phone: string) {
-  const { error } = await supabase.auth.signInWithOtp({ phone });
-  return { error: error?.message };
-}
-
-export async function verifyPhoneOtp(phone: string, token: string) {
-  const { error } = await supabase.auth.verifyOtp({ phone, token, type: "sms" });
-  return { error: error?.message };
-}
-
 export async function signUp(email: string, password: string) {
   const { data, error } = await supabase.auth.signUp({ email, password });
   return { error: error?.message, confirm: !error && !data.session };
