@@ -7,7 +7,6 @@ export function AuthModal({ mode, onClose, setMode }: { mode: "login" | "signup"
   const [busy, setBusy] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [phoneMode, setPhoneMode] = useState(false);
-  const [otpSent, setOtpSent] = useState(false);
   const [phone, setPhone] = useState("");
   const login = mode === "login";
   const input = "w-full rounded-xl border border-line bg-panel px-3.5 py-3 text-sm outline-none focus:border-brand";
@@ -106,7 +105,7 @@ export function AuthModal({ mode, onClose, setMode }: { mode: "login" | "signup"
           <p className="text-muted">After confirmation, return here and log in.</p>
           <button className="w-full rounded-xl border border-line px-4 py-3 font-semibold" onClick={() => { setConfirmed(false); setMode("login"); }}>Back to login</button>
         </div>
-      ) : (
+      ) : phoneMode ? (
         <div className="space-y-4">
           <div className="pe_signin_button min-h-12" data-client-id="11551551168649638491"></div>
           <div className="rounded-xl border border-line bg-panel px-4 py-4 text-sm">
@@ -145,7 +144,7 @@ export function AuthModal({ mode, onClose, setMode }: { mode: "login" | "signup"
           <button
             type="button"
             disabled={busy}
-            onClick={() => { setPhoneMode(true); setMessage(null); setOtpSent(false); }}
+            onClick={() => { setPhoneMode(true); setMessage(null); }}
             className="w-full rounded-xl border border-line px-4 py-3 font-semibold hover:bg-slate-50 disabled:opacity-60"
           >
             Continue with phone
