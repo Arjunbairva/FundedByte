@@ -92,6 +92,8 @@ export default async function handler(req: any, res: any) {
   try {
     const verified = await readVerifiedEmail(userJsonUrl);
     const internalEmail = verified.email;
+    const hashedEmail = await emailHash(verified.email);
+    const legacyEmail = `email_${hashedEmail}@email.fundedbytes.local`;
     const password = `${crypto.randomUUID()}${crypto.randomUUID()}`;
 
     const admin = createClient(SUPABASE_URL, secretKey, {
@@ -102,7 +104,7 @@ export default async function handler(req: any, res: any) {
       },
     });
 
-    const existing = await findUserByEmail(admin, verified.email);
+    const existing = (await findUserByEmail(admin, legacyEmail)) || (await findUserByEmail(admin, verified.email));
     const metadata = {
       auth_method: "phone_email_email",
       verified_email: verified.email,
