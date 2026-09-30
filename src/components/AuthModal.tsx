@@ -101,14 +101,6 @@ export function AuthModal({ mode, onClose, setMode }: { mode: "login" | "signup"
           <button type="button" disabled={busy || !phone.trim()} onClick={phoneSubmit} className="w-full rounded-xl bg-brand py-3.5 font-semibold text-white hover:bg-brand2 disabled:opacity-60">
             {busy ? "Please wait…" : otpSent ? "Verify & continue" : "Send OTP"}
           </button>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => { setPhoneMode(true); setMessage(null); setOtpSent(false); }}
-            className="w-full rounded-xl border border-line px-4 py-3 font-semibold hover:bg-slate-50 disabled:opacity-60"
-          >
-            Continue with phone
-          </button>
           <button type="button" className="w-full text-xs text-muted hover:text-fg" onClick={() => { setPhoneMode(false); setOtpSent(false); setMessage(null); }}>
             Back to email / Google
           </button>
@@ -136,6 +128,14 @@ export function AuthModal({ mode, onClose, setMode }: { mode: "login" | "signup"
               <path fill="#EA4335" d="M12 6.12c1.43 0 2.72.49 3.73 1.45l2.8-2.8C16.84 3.11 14.63 2.25 12 2.25a9.75 9.75 0 0 0-8.71 5.38l3.24 2.52C7.3 7.84 9.46 6.12 12 6.12Z"/>
             </svg>
             Continue with Google
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => { setPhoneMode(true); setMessage(null); setOtpSent(false); }}
+            className="w-full rounded-xl border border-line px-4 py-3 font-semibold hover:bg-slate-50 disabled:opacity-60"
+          >
+            Continue with phone
           </button>
           <button type="button" className="w-full text-xs text-muted hover:text-fg" onClick={() => { setMessage(null); setConfirmed(false); setMode(login ? "signup" : "login"); }}>{login ? "Create a new account" : "Already have an account? Log in"}</button>
         </form>
