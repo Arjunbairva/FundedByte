@@ -87,7 +87,7 @@ async function requireAdmin(req: any) {
   if (!isAllowed) {
     const forbidden: any = new Error(
       configuredAdminEmails.length
-        ? "Admin access denied: the signed-in identity is not in the Production ADMIN_EMAILS allowlist."
+        ? "Admin access denied: the authenticated user was verified, but the Production ADMIN_EMAILS comparison failed."
         : "Admin access denied: ADMIN_EMAILS is not available to this Production function."
     );
     forbidden.status = 403;
