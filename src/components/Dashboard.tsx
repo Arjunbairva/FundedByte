@@ -120,7 +120,7 @@ function TradingViewMarketData({ onTrade }: { onTrade: (symbol: string) => void 
     widget.setAttribute("symbol-sectors", JSON.stringify([
       {
         sectionName: "Forex",
-        symbols: ["FX:EURUSD", "FX:GBPUSD", "FX:USDJPY"],
+        symbols: ["FX:EURUSD", "FX:GBPUSD", "FX:USDJPY", "FX:USDCHF", "FX:AUDUSD", "FX:USDCAD"],
       },
       {
         sectionName: "Commodities",
@@ -216,7 +216,7 @@ function TradeModal({
         </div>
         {error && <p className="mt-3 text-sm text-loss">{error}</p>}
         <button onClick={submit} className={`mt-5 w-full rounded-xl py-3.5 font-semibold text-white ${side === "Buy" ? "bg-gain" : "bg-loss"}`}>{side} {symbol}</button>
-        <p className="mt-3 text-center text-xs text-muted">This is a paper trade using the latest Twelve Data price. No broker order is sent.</p>
+        <p className="mt-3 text-center text-xs text-muted">Paper trading only. TradingView provides the primary market display; a price snapshot is requested only when you open a trade. No broker order is sent.</p>
       </div>
     </div>
   );
@@ -229,6 +229,7 @@ export function Dashboard({ tab, onTabChange, onHome, onDeposit, onWithdraw, onL
   const [prices, setPrices] = useState<Record<string, number>>({});
   const [marketStatus, setMarketStatus] = useState<MarketStatus>("loading");
   const [tradeSymbol, setTradeSymbol] = useState<string | null>(null);
+  const [chartSymbol, setChartSymbol] = useState("EUR/USD");
 
   // TradingView is the primary market-data layer. Twelve Data is used only
   // when an order needs a server-side price snapshot.
@@ -265,6 +266,7 @@ export function Dashboard({ tab, onTabChange, onHome, onDeposit, onWithdraw, onL
       if (price === undefined) return;
       setPrices(prev => (price === null ? prev : { ...prev, [symbol]: price }));
       setMarketStatus("live");
+      setChartSymbol(symbol);
       setTradeSymbol(symbol);
     } catch {}
   };
@@ -300,7 +302,7 @@ export function Dashboard({ tab, onTabChange, onHome, onDeposit, onWithdraw, onL
 
           <div className="mt-8 flex gap-2 overflow-x-auto border-b border-line pb-2 lg:hidden">{([["overview","Overview"],["open","Open Positions"],["closed","Closed Positions"],["transactions","Transactions"]] as const).map(([id,label]) => <button key={id} onClick={() => onTabChange(id)} className={`whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold ${tab === id ? "bg-brand text-white" : "border border-line bg-card"}`}>{label}</button>)}</div>
 
-          {tab === "overview" && <div className="mt-8 space-y-6"><TradingViewMarketData onTrade={openTrade} /><TradingViewChart symbol={tradeSymbol ?? "XAU/USD"} /><div className="grid gap-6 xl:grid-cols-[1.5fr_.8fr]"><section><div className="mb-4 flex items-center justify-between"><h2 className="text-lg font-semibold">Open Positions</h2><button onClick={() => onTabChange("open")} className="text-sm font-semibold text-brand">View all</button></div><PositionsTable rows={liveOpen.slice(0,4)} open onClose={closeLivePosition} prices={prices} /></section><section className="rounded-2xl border border-line bg-card p-5"><h2 className="text-lg font-semibold">Account snapshot</h2><div className="mt-5 space-y-4 text-sm">{[["Open positions",String(liveOpen.length)],["Closed positions",String(closedPositions.length)],["Base currency","USD"],["Trading status","Paper"]].map(([k,v]) => <div key={k} className="flex justify-between border-b border-line pb-3 last:border-0"><span className="text-muted">{k}</span><span className="font-semibold">{v}</span></div>)}</div></section></div></div>}
+          {tab === "overview" && <div className="mt-8 space-y-6"><TradingViewMarketData onTrade={openTrade} /><div className="rounded-2xl border border-line bg-card p-3"><div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-2 pb-3"><div><p className="text-xs font-semibold uppercase tracking-wide text-brand">Trading terminal</p><h2 className="mt-1 text-lg font-semibold">{chartSymbol}</h2></div><div className="flex flex-wrap gap-2">{["EUR/USD","GBP/USD","USD/JPY","USD/CHF","AUD/USD","USD/CAD","XAU/USD","XAG/USD","USOIL"].map(symbol => <button key={symbol} onClick={() => setChartSymbol(symbol)} className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold ${chartSymbol === symbol ? "bg-brand text-white" : "border border-line bg-panel text-muted hover:text-fg"}`}>{symbol}</button>)}</div></div><div className="mt-3"><TradingViewChart symbol={chartSymbol} /></div></div><div className="grid gap-6 xl:grid-cols-[1.5fr_.8fr]"><section><div className="mb-4 flex items-center justify-between"><h2 className="text-lg font-semibold">Open Positions</h2><button onClick={() => onTabChange("open")} className="text-sm font-semibold text-brand">View all</button></div><PositionsTable rows={liveOpen.slice(0,4)} open onClose={closeLivePosition} prices={prices} /></section><section className="rounded-2xl border border-line bg-card p-5"><h2 className="text-lg font-semibold">Account snapshot</h2><div className="mt-5 space-y-4 text-sm">{[["Open positions",String(liveOpen.length)],["Closed positions",String(closedPositions.length)],["Base currency","USD"],["Trading status","Paper"]].map(([k,v]) => <div key={k} className="flex justify-between border-b border-line pb-3 last:border-0"><span className="text-muted">{k}</span><span className="font-semibold">{v}</span></div>)}</div></section></div></div>}
 
           {tab === "open" && <section className="mt-8 space-y-6"><TradingViewMarketData onTrade={openTrade} /><div><h2 className="mb-4 text-lg font-semibold">Open Positions</h2><PositionsTable rows={liveOpen} open onClose={closeLivePosition} prices={prices} /></div></section>}
           {tab === "closed" && <section className="mt-8"><h2 className="mb-4 text-lg font-semibold">Closed Positions</h2><PositionsTable rows={closedPositions} open={false} prices={prices} /></section>}
