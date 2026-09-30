@@ -113,7 +113,9 @@ export default async function handler(req: any, res: any) {
     let userId: string;
     if (existing) {
       const { data, error } = await admin.auth.admin.updateUserById(existing.id, {
+        email: verified.email,
         password,
+        email_confirm: true,
         user_metadata: { ...existing.user_metadata, ...metadata },
       });
       if (error || !data.user) throw error ?? new Error("Unable to update email account.");
