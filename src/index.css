@@ -1,23 +1,29 @@
 @import "tailwindcss";
+
 @theme {
   --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Bricolage Grotesque", "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
-  --color-ink: #F5F7FA; --color-panel: #EAEFF6; --color-card: #FFFFFF; --color-line: #D5DDE8;
-  --color-fg: #0E1B2E; --color-muted: #53607A;
-  --color-brand: #2348D9; --color-brand2: #1A37B0; --color-gain: #0B7F55; --color-loss: #C23A3A;
-  --color-night: #0E1B2E; --color-night-fg: #E8EEF9; --color-night-muted: #A9B6CE; --color-night-line: #2A3B57;
+  --color-ink: #F5F7FA;
+  --color-panel: #EAEFF6;
+  --color-card: #FFFFFF;
+  --color-line: #D5DDE8;
+  --color-fg: #0E1B2E;
+  --color-muted: #53607A;
+  --color-brand: #2348D9;
+  --color-brand2: #1A37B0;
+  --color-gain: #0B7F55;
+  --color-loss: #C23A3A;
+  --color-night: #0E1B2E;
+  --color-night-fg: #E8EEF9;
+  --color-night-muted: #A9B6CE;
+  --color-night-line: #2A3B57;
 }
+
 html { scroll-behavior: smooth; color-scheme: light; }
-body { background: var(--color-ink); color: var(--color-fg); font-family: var(--font-sans); font-size: 1.0625rem; line-height: 1.65; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+body { margin: 0; background: var(--color-ink); color: var(--color-fg); font-family: var(--font-sans); font-size: 1rem; line-height: 1.6; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+button, input { font: inherit; }
 h1, h2, h3, h4 { font-family: var(--font-display); text-wrap: balance; }
 p { text-wrap: pretty; }
-@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-@keyframes draw { to { stroke-dashoffset: 0; } }
-.rise { animation: rise .4s ease both; }
-.draw { stroke-dasharray: 1400; stroke-dashoffset: 1400; animation: draw 2.4s ease .3s forwards; }
-dialog { margin: auto; background: transparent; color: inherit; max-width: 100vw; }
-dialog::backdrop { background: rgba(14,27,46,.6); backdrop-filter: blur(4px); }
-dialog[open] { animation: rise .2s ease both; }
-:focus-visible { outline: 3px solid var(--color-brand); outline-offset: 3px; border-radius: 4px; }
 .on-night :focus-visible { outline-color: #9DB8FF; }
-@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { animation: none !important; transition: none !important; } .draw { stroke-dashoffset: 0; } }
+:focus-visible { outline: 3px solid var(--color-brand); outline-offset: 3px; border-radius: 5px; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
