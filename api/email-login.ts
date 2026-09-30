@@ -91,8 +91,7 @@ export default async function handler(req: any, res: any) {
 
   try {
     const verified = await readVerifiedEmail(userJsonUrl);
-    const hashedEmail = await emailHash(verified.email);
-    const internalEmail = `email_${hashedEmail}@email.fundedbytes.local`;
+    const internalEmail = verified.email;
     const password = `${crypto.randomUUID()}${crypto.randomUUID()}`;
 
     const admin = createClient(SUPABASE_URL, secretKey, {
@@ -103,7 +102,7 @@ export default async function handler(req: any, res: any) {
       },
     });
 
-    const existing = await findUserByEmail(admin, internalEmail);
+    const existing = await findUserByEmail(admin, verified.email);
     const metadata = {
       auth_method: "phone_email_email",
       verified_email: verified.email,
@@ -121,7 +120,7 @@ export default async function handler(req: any, res: any) {
       userId = data.user.id;
     } else {
       const { data, error } = await admin.auth.admin.createUser({
-        email: internalEmail,
+        email: verified.email,
         password,
         email_confirm: true,
         user_metadata: metadata,
@@ -131,7 +130,7 @@ export default async function handler(req: any, res: any) {
     }
 
     const { data: session, error: signInError } = await admin.auth.signInWithPassword({
-      email: internalEmail,
+      email: verified.email,
       password,
     });
     if (signInError || !session.session) {
