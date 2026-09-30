@@ -6,10 +6,11 @@ export function CheckoutPage({ program, onBack }: { program: Program; onBack: ()
   const [promo, setPromo] = useState("");
   const [accepted, setAccepted] = useState(false);
   const [promoMsg, setPromoMsg] = useState<string | null>(null);
+  const [appliedPromo, setAppliedPromo] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
   const normalizedPromo = promo.trim().toUpperCase();
-  const promoValid = normalizedPromo === "BYTES29";
+  const promoValid = appliedPromo === "BYTES29";
   const discount = promoValid ? program.fee * 0.29 : 0;
   const total = program.fee - discount;
 
@@ -90,7 +91,18 @@ export function CheckoutPage({ program, onBack }: { program: Program; onBack: ()
                   <div className="mt-3 flex gap-2">
                     <input value={promo} onChange={e => { setPromo(e.target.value); setPromoMsg(null); }} placeholder="Enter code"
                       className="min-w-0 flex-1 rounded-lg border border-line bg-panel px-3 py-3 text-sm outline-none focus:border-brand" />
-                    <button type="button" onClick={() => setPromoMsg(promoValid ? "Bytes29 applied — 29% off." : (promo.trim() ? "Invalid promo code." : "Enter a code first."))}
+                    <button type="button" onClick={() => {
+                      if (!promo.trim()) {
+                        setAppliedPromo("");
+                        setPromoMsg("Enter a code first.");
+                      } else if (normalizedPromo === "BYTES29") {
+                        setAppliedPromo("BYTES29");
+                        setPromoMsg("Bytes29 applied — 29% off.");
+                      } else {
+                        setAppliedPromo("");
+                        setPromoMsg("Invalid promo code.");
+                      }
+                    }}
                       className="rounded-lg border border-line bg-card px-4 py-3 text-sm font-semibold hover:border-fg">Apply</button>
                   </div>
                   {promoMsg && <p role="status" className={`mt-2 text-xs ${promoValid ? "text-green-600" : "text-muted"}`}>{promoMsg}</p>}
