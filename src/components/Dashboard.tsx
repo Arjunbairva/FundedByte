@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { instruments, usd, type Position, type ClosedPosition } from "../config";
 import { Logo } from "./Sections";
 import { useStore, closePosition, createPosition } from "../store";
@@ -263,7 +263,7 @@ export function Dashboard({ tab, onTabChange, onHome, onDeposit, onWithdraw, onL
       const payload: { data?: MarketPrice[] } = await response.json();
       const price = payload.data?.find(row => row.symbol === symbol)?.price;
       if (price === undefined) return;
-      setPrices(prev => ({ ...prev, [symbol]: price }));
+      setPrices(prev => (price === null ? prev : { ...prev, [symbol]: price }));
       setMarketStatus("live");
       setTradeSymbol(symbol);
     } catch {}
@@ -302,7 +302,7 @@ export function Dashboard({ tab, onTabChange, onHome, onDeposit, onWithdraw, onL
 
           {tab === "overview" && <div className="mt-8 space-y-6"><TradingViewMarketData onTrade={openTrade} /><TradingViewChart symbol={tradeSymbol ?? "XAU/USD"} /><div className="grid gap-6 xl:grid-cols-[1.5fr_.8fr]"><section><div className="mb-4 flex items-center justify-between"><h2 className="text-lg font-semibold">Open Positions</h2><button onClick={() => onTabChange("open")} className="text-sm font-semibold text-brand">View all</button></div><PositionsTable rows={liveOpen.slice(0,4)} open onClose={closeLivePosition} prices={prices} /></section><section className="rounded-2xl border border-line bg-card p-5"><h2 className="text-lg font-semibold">Account snapshot</h2><div className="mt-5 space-y-4 text-sm">{[["Open positions",String(liveOpen.length)],["Closed positions",String(closedPositions.length)],["Base currency","USD"],["Trading status","Paper"]].map(([k,v]) => <div key={k} className="flex justify-between border-b border-line pb-3 last:border-0"><span className="text-muted">{k}</span><span className="font-semibold">{v}</span></div>)}</div></section></div></div>}
 
-          {tab === "open" && <section className="mt-8 space-y-6"><MarketWatch prices={prices} status={marketStatus} onTrade={setTradeSymbol} /><div><h2 className="mb-4 text-lg font-semibold">Open Positions</h2><PositionsTable rows={liveOpen} open onClose={closeLivePosition} prices={prices} /></div></section>}
+          {tab === "open" && <section className="mt-8 space-y-6"><TradingViewMarketData onTrade={openTrade} /><div><h2 className="mb-4 text-lg font-semibold">Open Positions</h2><PositionsTable rows={liveOpen} open onClose={closeLivePosition} prices={prices} /></div></section>}
           {tab === "closed" && <section className="mt-8"><h2 className="mb-4 text-lg font-semibold">Closed Positions</h2><PositionsTable rows={closedPositions} open={false} prices={prices} /></section>}
           {tab === "transactions" && <section className="mt-8 grid gap-6 xl:grid-cols-2"><TransactionTable title="Deposits" rows={deposits.map(x => ({id:x.id,method:x.method,amount:x.amount,status:x.status,date:x.createdAt}))} /><TransactionTable title="Withdrawals" rows={withdrawals.map(x => ({id:x.id,method:x.method,amount:x.amount,status:x.status,date:x.createdAt}))} /></section>}
         </main>
