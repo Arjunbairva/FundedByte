@@ -94,7 +94,7 @@ export default async function handler(req: any, res: any) {
     const verified = await readVerifiedPhone(userJsonUrl);
     const hashedPhone = await phoneHash(verified.phone);
     const email = `phone_${hashedPhone}@phone.fundedbytes.local`;
-    const password = `${crypto.randomUUID()}-${crypto.randomUUID()}`;
+    const password = `${crypto.randomUUID()}${crypto.randomUUID()}`;
 
     const admin = createClient(supabaseUrl, secretKey, {
       auth: {
