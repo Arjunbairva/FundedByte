@@ -208,17 +208,49 @@ export function closePosition(id: string, exit: number, pnl: number) {
 }
 
 export async function createDeposit(input: { method: DepositMethod; amount: number; utr?: string }) {
+  if (remoteReady) {
+    const { data, error } = await supabase.rpc("create_deposit_request", {
+      p_method: input.method, p_amount: input.amount, p_reference: input.utr ?? null,
+    });
+    if (error) throw new Error(error.message);
+    if (data) {
+      const row: any = Array.isArray(data) ? data[0] : data;
+      const deposit: Deposit = {
+        id: String(row.id), method: row.method, amount: Number(row.amount),
+        status: row.status, createdAt: row.created_at, utr: row.reference ?? undefined,
+      };
+      state = { ...state, deposits: [deposit, ...state.deposits] };
+      emit();
+      return deposit;
+    }
+  }
+
   const row: Deposit = { id: `DEP-${Date.now()}`, ...input, status: "Pending", createdAt: new Date().toISOString() };
   state = { ...state, deposits: [row, ...state.deposits] };
-  persist();
-  emit();
+  persist(); emit();
   return row;
 }
 
 export async function createWithdrawal(input: { method: WithdrawalMethod; amount: number; destination: string }) {
+  if (remoteReady) {
+    const { data, error } = await supabase.rpc("create_withdrawal_request", {
+      p_method: input.method, p_amount: input.amount, p_destination: input.destination,
+    });
+    if (error) throw new Error(error.message);
+    if (data) {
+      const row: any = Array.isArray(data) ? data[0] : data;
+      const withdrawal: Withdrawal = {
+        id: String(row.id), method: row.method, amount: Number(row.amount),
+        status: row.status, createdAt: row.created_at, destination: row.destination ?? "",
+      };
+      state = { ...state, withdrawals: [withdrawal, ...state.withdrawals] };
+      emit();
+      return withdrawal;
+    }
+  }
+
   const row: Withdrawal = { id: `WD-${Date.now()}`, ...input, status: "Pending", createdAt: new Date().toISOString() };
   state = { ...state, withdrawals: [row, ...state.withdrawals] };
-  persist();
-  emit();
+  persist(); emit();
   return row;
 }
