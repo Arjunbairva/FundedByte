@@ -12,15 +12,21 @@ export function AuthModal({ mode, onClose, setMode }: { mode: "login" | "signup"
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
-    setBusy(true); setMessage(null);
+    setBusy(true);
+    setMessage(null);
+
     const result = login
       ? await signIn(String(f.get("email")), String(f.get("password")))
       : await signUp(String(f.get("email")), String(f.get("password")));
+
     setBusy(false);
     if (result.error) return setMessage(result.error);
     if (result.confirm) return setConfirmed(true);
+
     onClose();
-    location.hash = "#/dashboard";
+    // New sessions always enter the funding flow first. The app will only
+    // expose the trading dashboard after a deposit has been submitted.
+    location.hash = "#/deposit";
   };
 
   return (
