@@ -157,6 +157,7 @@ supabase.auth.getSession().then(async ({ data: { session } }) => {
 supabase.auth.onAuthStateChange(async (_event, session) => {
   const user = session?.user.email ?? null;
   const remote = user ? await loadRemote(user) : null;
+  remoteReady = Boolean(remote);
   state = { ...(remote ?? (user ? loadPersisted(user) : blankState)), user, ready: true };
   emit();
 });
