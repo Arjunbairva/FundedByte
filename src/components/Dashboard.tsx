@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { instruments, usd } from "../config";
 import { Logo } from "./Sections";
-import { useStore, signOut, type Position, type ClosedPosition } from "../store";
+import { useStore, closePosition, type Position, type ClosedPosition } from "../store";
 
 export type DashboardTab = "overview" | "open" | "closed" | "transactions";
 
@@ -40,9 +40,9 @@ function PositionsTable({ rows, open, onClose }: { rows: (Position | ClosedPosit
 export function Dashboard({ tab, onTabChange, onHome, onDeposit, onWithdraw, onLogout }: {
   tab: DashboardTab; onTabChange: (tab: DashboardTab) => void; onHome: () => void; onDeposit: () => void; onWithdraw: () => void; onLogout: () => void;
 }) {
-  const { user, account, openPositions, closedPositions, deposits, withdrawals, closePosition } = useStore();
+  const { user, account, openPositions, closedPositions, deposits, withdrawals } = useStore();
   const [tick, setTick] = useState(() => Date.now());
-  useMemo(() => { const id = window.setInterval(() => setTick(Date.now()), 1000); return () => window.clearInterval(id); }, []);
+  useEffect(() => { const id = window.setInterval(() => setTick(Date.now()), 1000); return () => window.clearInterval(id); }, []);
 
   const liveOpen = openPositions.map((p, i) => {
     const current = livePrice(p.entry, tick / 1000, i);
