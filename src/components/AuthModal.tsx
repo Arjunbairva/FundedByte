@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog } from "./Dialog";
 import { signIn, signInWithGoogle, signUp } from "../store";
 
@@ -11,6 +11,62 @@ export function AuthModal({ mode, onClose, setMode }: { mode: "login" | "signup"
   const [phone, setPhone] = useState("");
   const login = mode === "login";
   const input = "w-full rounded-xl border border-line bg-panel px-3.5 py-3 text-sm outline-none focus:border-brand";
+
+
+  useEffect(() => {
+    if (!phoneMode) return;
+    const container = document.querySelector(".pe_signin_button");
+    if (!container) return;
+
+    const listener = async (userObj: { user_json_url?: string }) => {
+      if (!userObj.user_json_url) {
+        setMessage("Phone verification did not return a user reference.");
+        return;
+      }
+
+      setBusy(true);
+      setMessage(null);
+      try {
+        const response = await fetch("/api/phone-login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_json_url: userObj.user_json_url }),
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Phone login failed.");
+
+        const { supabase } = await import("../supabase");
+        const { error } = await supabase.auth.setSession({
+          access_token: result.access_token,
+          refresh_token: result.refresh_token,
+        });
+        if (error) throw error;
+
+        onClose();
+        location.hash = "#/deposit";
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : "Phone login failed.");
+      } finally {
+        setBusy(false);
+      }
+    };
+
+    const win = window as Window & {
+      phoneEmailListener?: (userObj: { user_json_url?: string }) => void;
+    };
+    win.phoneEmailListener = listener;
+
+    const script = document.createElement("script");
+    script.src = "https://www.phone.email/sign_in_button_v1.js";
+    script.async = true;
+    container.appendChild(script);
+
+    return () => {
+      if (win.phoneEmailListener === listener) delete win.phoneEmailListener;
+      script.remove();
+      container.innerHTML = "";
+    };
+  }, [phoneMode, onClose]);
 
   const googleLogin = async () => {
     setBusy(true);
@@ -52,19 +108,12 @@ export function AuthModal({ mode, onClose, setMode }: { mode: "login" | "signup"
         </div>
       ) : (
         <div className="space-y-4">
+          <div className="pe_signin_button min-h-12" data-client-id="11551551168649638491"></div>
           <div className="rounded-xl border border-line bg-panel px-4 py-4 text-sm">
             <p className="font-semibold">Continue with Phone</p>
             <p className="mt-1 text-muted">Verify your mobile number securely with Phone.Email.</p>
           </div>
-          <button
-            type="button"
-            className="w-full rounded-xl border border-line bg-white px-4 py-3 font-semibold text-slate-800 hover:bg-slate-50"
-            onClick={() => {
-              window.location.href = "https://www.phone.email/auth/log-in?client_id=YOUR_PHONE_EMAIL_CLIENT_ID&redirect_url=" + encodeURIComponent(window.location.href);
-            }}
-          >
-            Continue with Phone
-          </button>
+
           <button type="button" className="w-full text-xs text-muted hover:text-fg" onClick={() => { setPhoneMode(false); setMessage(null); }}>
             Back to email / Google
           </button>
