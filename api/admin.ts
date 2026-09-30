@@ -76,7 +76,13 @@ async function requireAdmin(req: any) {
   ].map(normalizeEmail).filter(Boolean);
 
   const configuredAdminEmails = adminEmails();
-  const isAllowed = candidates.some(email => configuredAdminEmails.includes(email));
+
+  // Prefer the verified identity supplied by Phone.Email for this project.
+  // The browser never controls this value; it comes from the authenticated
+  // Supabase user record returned by getUser(accessToken).
+  const verifiedEmail = normalizeEmail(data.user.user_metadata?.verified_email);
+  const primaryIdentity = verifiedEmail || normalizeEmail(data.user.email);
+  const isAllowed = Boolean(primaryIdentity && configuredAdminEmails.includes(primaryIdentity));
 
   if (!isAllowed) {
     const forbidden: any = new Error(
