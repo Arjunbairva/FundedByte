@@ -1,6 +1,6 @@
 type MarketRow = { symbol: string; price: number | null; error?: string };
 
-const ALLOWED = new Set(["EUR/USD","GBP/USD","USD/JPY","XAU/USD","XAG/USD","USOIL"]);
+const ALLOWED = new Set(["EUR/USD","GBP/USD","USD/JPY","USD/CHF","AUD/USD","USD/CAD","XAU/USD","XAG/USD","USOIL"]);
 
 export default async function handler(req: any, res: any) {
   if (req.method !== "GET") {
