@@ -49,6 +49,7 @@ const blankState: PersistedState = {
 };
 
 let state: State = { ...blankState, user: null, ready: false };
+let remoteReady = false;
 
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach(fn => fn());
