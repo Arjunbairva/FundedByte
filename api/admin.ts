@@ -20,6 +20,8 @@ function normalizeEmail(value: unknown) {
     .normalize("NFKC")
     .replace(/[\u200B-\u200D\uFEFF]/g, "")
     .trim()
+    .replace(/^["'`]+|["'`]+$/g, "")
+    .trim()
     .toLowerCase();
 }
 
