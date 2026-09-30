@@ -22,7 +22,7 @@ export function CheckoutPage({ program, onBack }: { program: Program; onBack: ()
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-8">
           <button onClick={onBack} aria-label="Back to FundedByte home"><Logo /></button>
           <div className="flex items-center gap-2 text-sm text-muted">
-            <span className="hidden sm:inline">Secure checkout</span>
+            <span className="hidden sm:inline">Checkout</span>
             <span aria-hidden="true">•</span>
             <span>Step 1 of 2</span>
           </div>
@@ -127,8 +127,8 @@ export function CheckoutPage({ program, onBack }: { program: Program; onBack: ()
                 </ol>
               </div>
               <div className="mt-5 flex items-center gap-2 text-xs text-muted">
-                <span aria-hidden="true">🔒</span>
-                Payment details are handled by the payment provider, not stored by FundedByte.
+                <span aria-hidden="true" className="text-brand">●</span>
+                When payment is enabled, payment details will be handled by the payment provider.
               </div>
             </div>
 
