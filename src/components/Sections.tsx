@@ -1,10 +1,47 @@
-import { useState } from "react";
-import { siteConfig, instruments } from "../config";
+import { useEffect, useRef, useState } from "react";
+import { siteConfig } from "../config";
 
 const wrap = "mx-auto w-full max-w-7xl px-5 sm:px-8";
 const btn = "inline-flex min-h-11 items-center justify-center rounded-xl px-5 text-sm font-semibold transition";
 const primary = `${btn} bg-brand text-white hover:bg-brand2`;
 const secondary = `${btn} border border-line bg-card text-fg hover:border-fg`;
+
+function LiveMarketsWidget() {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const host = ref.current;
+    if (!host) return;
+    host.innerHTML = "";
+
+    const widget = document.createElement("tv-market-data");
+    widget.setAttribute("symbol-sectors", JSON.stringify([
+      {
+        sectionName: "Forex",
+        symbols: ["FX:EURUSD", "FX:GBPUSD", "FX:USDJPY"],
+      },
+      {
+        sectionName: "Commodities",
+        symbols: ["OANDA:XAUUSD", "OANDA:XAGUSD", "TVC:USOIL"],
+      },
+    ]));
+    host.appendChild(widget);
+
+    const src = "https://widgets.tradingview-widget.com/w/en/tv-market-data.js";
+    if (!document.querySelector(`script[src="${src}"]`)) {
+      const script = document.createElement("script");
+      script.type = "module";
+      script.src = src;
+      document.head.appendChild(script);
+    }
+
+    return () => {
+      host.innerHTML = "";
+    };
+  }, []);
+
+  return <div ref={ref} className="min-h-[430px] w-full overflow-hidden rounded-2xl border border-line bg-card" />;
+}
 
 export const Logo = ({ dark=false }: { dark?: boolean }) => (
   <span className={`inline-flex items-center gap-2.5 font-display text-xl font-bold tracking-tight ${dark ? "text-white" : "text-fg"}`}>
@@ -32,7 +69,7 @@ function MarketHero() {
 export function HomePage({ onOpenDashboard, onDeposit }: { onOpenDashboard:()=>void; onDeposit:()=>void }) {
   return <main>
     <section className="on-night bg-night py-20 text-white sm:py-28"><div className={wrap+" grid items-center gap-14 lg:grid-cols-[1.05fr_.95fr]"}><div><div className="inline-flex rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold tracking-wide text-night-muted">GLOBAL FX & COMMODITIES</div><h1 className="mt-6 max-w-3xl text-5xl font-bold leading-[1.02] tracking-[-0.04em] sm:text-7xl">Trade forex and commodities from one account.</h1><p className="mt-6 max-w-2xl text-lg text-night-muted">A focused trading experience for major currency pairs, precious metals and energy markets.</p><div className="mt-9 flex flex-col gap-3 sm:flex-row"><button onClick={onOpenDashboard} className={`${btn} bg-white text-night hover:bg-night-fg`}>Open dashboard</button><button onClick={onDeposit} className={`${btn} border border-white/30 text-white hover:border-white`}>Deposit funds</button></div><div className="mt-10 flex flex-wrap gap-x-8 gap-y-3 text-sm text-night-muted"><span><b className="text-white">Forex</b> majors & crosses</span><span><b className="text-white">Metals</b> gold & silver</span><span><b className="text-white">Energy</b> crude oil</span></div></div><MarketHero/></div></section>
-    <section id="markets" className="py-20 sm:py-24"><div className={wrap}><p className="text-sm font-semibold text-brand">MARKETS</p><h2 className="mt-2 text-3xl font-semibold sm:text-4xl">Initial instrument set</h2><p className="mt-3 max-w-2xl text-muted">Major forex pairs and selected commodities for the first release.</p><div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{instruments.map(x=><div key={x.symbol} className="rounded-2xl border border-line bg-card p-5"><div className="flex items-center justify-between"><div><p className="font-semibold">{x.symbol}</p><p className="text-xs text-muted">{x.name}</p></div><span className="text-xs text-muted">{x.type}</span></div><div className="mt-5 flex items-end justify-between"><div><p className="font-display text-2xl font-bold">{x.base.toFixed(x.digits)}</p><p className={`mt-1 text-xs ${x.change>=0?"text-gain":"text-loss"}`}>{x.change>=0?"+":""}{x.change.toFixed(2)}%</p></div><button onClick={onOpenDashboard} className="rounded-lg border border-line px-3 py-2 text-xs font-semibold hover:border-fg">Trade</button></div></div>)}</div></div></section>
+    <section id="markets" className="py-20 sm:py-24"><div className={wrap}><p className="text-sm font-semibold text-brand">MARKETS</p><h2 className="mt-2 text-3xl font-semibold sm:text-4xl">Initial instrument set</h2><p className="mt-3 max-w-2xl text-muted">Major forex pairs and selected commodities for the first release.</p><div className="mt-10"><LiveMarketsWidget /></div><div className="mt-4 flex justify-center"><button onClick={onOpenDashboard} className="rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white hover:bg-brand2">Open Trading Dashboard</button></div></div></section>
     <section id="platform" className="bg-panel py-20 sm:py-24"><div className={wrap}><p className="text-sm font-semibold text-brand">PLATFORM</p><h2 className="mt-2 text-3xl font-semibold sm:text-4xl">Focused v1. Built to extend.</h2><div className="mt-10 grid gap-4 md:grid-cols-2"><article className="rounded-2xl border border-line bg-card p-6"><h3 className="text-lg font-semibold">Trading dashboard</h3><p className="mt-2 text-muted">Balance, equity, margin, floating P&L, open positions and closed positions.</p></article><article className="rounded-2xl border border-line bg-card p-6"><h3 className="text-lg font-semibold">UPI P2P funding</h3><p className="mt-2 text-muted">Scan the configured QR, transfer the amount and submit the UTR for manual verification.</p></article><article className="rounded-2xl border border-line bg-card p-6"><h3 className="text-lg font-semibold">USDT funding</h3><p className="mt-2 text-muted">Deposit and withdrawal flow using BSC / BEP-20.</p></article><article className="rounded-2xl border border-line bg-card p-6"><h3 className="text-lg font-semibold">Provider-ready</h3><p className="mt-2 text-muted">Market data, payment and execution adapters can be connected without redesigning the client UI.</p></article></div></div></section>
     <section id="faq" className="py-20 sm:py-24"><div className={wrap+" max-w-4xl"}><p className="text-sm font-semibold text-brand">FAQ</p><h2 className="mt-2 text-3xl font-semibold">Funding & account basics</h2><div className="mt-8 divide-y divide-line border-y border-line">{[["Minimum UPI deposit","₹1,000."],["Minimum USDT deposit","$20 on BSC / BEP-20."],["How are UPI deposits verified?","Deposits remain pending until the payment team verifies the submitted UTR."],["Can I view closed positions?","Yes. Open and closed positions have separate dashboard views."]].map(([q,a])=><div key={q} className="py-5"><h3 className="font-semibold">{q}</h3><p className="mt-1 text-muted">{a}</p></div>)}</div></div></section>
   </main>;
