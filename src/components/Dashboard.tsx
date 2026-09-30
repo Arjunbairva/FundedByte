@@ -249,6 +249,7 @@ export function Dashboard({ tab, onTabChange, onHome, onDeposit, onWithdraw, onL
   const [marketStatus, setMarketStatus] = useState<MarketStatus>("loading");
   const [tradeSymbol, setTradeSymbol] = useState<string | null>(null);
   const [chartSymbol, setChartSymbol] = useState("EUR/USD");
+  const [tradeError, setTradeError] = useState("");
 
   // TradingView is the primary market-data layer. Twelve Data is used only
   // when an order needs a server-side price snapshot.
@@ -269,12 +270,12 @@ export function Dashboard({ tab, onTabChange, onHome, onDeposit, onWithdraw, onL
   }, 0);
   const freeMargin = Math.max(0, equity - usedMargin);
 
-  const closeLivePosition = (id: string) => {
+  const closeLivePosition = async (id: string) => {
     const position = openPositions.find(p => p.id === id);
     if (!position) return;
     const exit = prices[position.symbol];
     if (exit === undefined) return;
-    closePosition(id, exit, positionPnl(position, exit));
+    try { await closePosition(id, exit, positionPnl(position, exit)); setTradeError(""); } catch (error) { setTradeError(error instanceof Error ? error.message : "Unable to close the position."); }
   };
 
   const openTrade = async (symbol: string) => {
@@ -282,23 +283,29 @@ export function Dashboard({ tab, onTabChange, onHome, onDeposit, onWithdraw, onL
       const response = await fetch(`/api/market?symbols=${encodeURIComponent(symbol)}`, { cache: "no-store" });
       const payload: { data?: MarketPrice[] } = await response.json();
       const price = payload.data?.find(row => row.symbol === symbol)?.price;
-      if (price === undefined) return;
+      if (price === undefined || price === null) return;
       setPrices(prev => (price === null ? prev : { ...prev, [symbol]: price }));
       setMarketStatus("live");
       setChartSymbol(symbol);
       setTradeSymbol(symbol);
-    } catch {}
+    } catch { setTradeError("Unable to load a live price snapshot. Please try again."); }
   };
 
-  const submitTrade = (side: "Buy" | "Sell", lots: number, sl?: number, tp?: number) => {
+  const submitTrade = async (side: "Buy" | "Sell", lots: number, sl?: number, tp?: number) => {
     if (!tradeSymbol) return;
     const entry = prices[tradeSymbol];
     if (entry === undefined) return;
-    createPosition({ symbol: tradeSymbol, side, lots, entry, current: entry, sl, tp, openedAt: new Date().toISOString() });
-    setTradeSymbol(null);
+    try {
+      await createPosition({ symbol: tradeSymbol, side, lots, entry, current: entry, sl, tp, openedAt: new Date().toISOString() });
+      setTradeError("");
+      setTradeSymbol(null);
+    } catch (error) {
+      setTradeError(error instanceof Error ? error.message : "Unable to place the paper order.");
+    }
   };
 
   const selectedPrice = tradeSymbol ? prices[tradeSymbol] : undefined;
+  const submitOrder = async (side: "Buy" | "Sell", lots: number, sl?: number, tp?: number) => { await submitTrade(side, lots, sl, tp); };
 
   return (
     <div className="min-h-screen bg-ink lg:flex">
@@ -311,9 +318,9 @@ export function Dashboard({ tab, onTabChange, onHome, onDeposit, onWithdraw, onL
       </aside>
 
       <div className="min-w-0 flex-1">
-        <header className="border-b border-line bg-card"><div className="flex h-16 items-center justify-between px-5 lg:px-8"><button onClick={onHome} className="lg:hidden"><Logo /></button><span className="truncate text-sm text-muted">{user}</span><div className="flex items-center gap-3"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${marketStatus === "live" ? "bg-green-50 text-green-700" : "bg-panel text-muted"}`}>{marketStatus === "live" ? "Live market data" : marketStatus === "loading" ? "Connecting…" : "Market data unavailable"}</span><div className="flex gap-2 lg:hidden"><button onClick={onDeposit} className="rounded-lg bg-brand px-3 py-2 text-xs font-semibold text-white">Deposit</button><button onClick={onWithdraw} className="rounded-lg border border-line px-3 py-2 text-xs font-semibold">Withdraw</button></div></div></div></header>
+        <header className="border-b border-line bg-card"><div className="flex h-16 items-center justify-between px-5 lg:px-8"><button onClick={onHome} className="lg:hidden"><Logo /></button><span className="truncate text-sm text-muted">{user}</span><div className="flex items-center gap-3"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${marketStatus === "live" ? "bg-green-50 text-green-700" : "bg-panel text-muted"}`}>{marketStatus === "live" ? "TradingView live data" : marketStatus === "loading" ? "Connecting…" : "Market data unavailable"}</span><div className="flex gap-2 lg:hidden"><button onClick={onDeposit} className="rounded-lg bg-brand px-3 py-2 text-xs font-semibold text-white">Deposit</button><button onClick={onWithdraw} className="rounded-lg border border-line px-3 py-2 text-xs font-semibold">Withdraw</button></div></div></div></header>
 
-        <main className="mx-auto max-w-7xl px-5 py-8 lg:px-8">
+        <main className="mx-auto max-w-7xl px-5 py-8 lg:px-8">{tradeError && <div className="mb-6 rounded-xl border border-loss/30 bg-red-50 px-4 py-3 text-sm text-loss">{tradeError}</div>}
           <div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-sm text-muted">Trading account</p><h1 className="mt-1 text-3xl font-semibold">Dashboard</h1></div><span className="rounded-full border border-line bg-card px-3 py-1.5 text-xs font-semibold">Paper account · {account.id}</span></div>
 
           <div className="mb-4 flex flex-wrap gap-2"><span className="rounded-full border border-line bg-card px-3 py-1.5 text-xs font-semibold">Zero Spread</span><span className="rounded-full border border-line bg-card px-3 py-1.5 text-xs font-semibold">Zero Swap</span></div>
@@ -321,7 +328,7 @@ export function Dashboard({ tab, onTabChange, onHome, onDeposit, onWithdraw, onL
 
           <div className="mt-8 flex gap-2 overflow-x-auto border-b border-line pb-2 lg:hidden">{([["overview","Overview"],["open","Open Positions"],["closed","Closed Positions"],["transactions","Transactions"]] as const).map(([id,label]) => <button key={id} onClick={() => onTabChange(id)} className={`whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold ${tab === id ? "bg-brand text-white" : "border border-line bg-card"}`}>{label}</button>)}</div>
 
-          {tab === "overview" && <div className="mt-8 space-y-6"><TradingViewMarketData onTrade={openTrade} /><div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]"><div className="rounded-2xl border border-line bg-card p-3"><div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-2 pb-3"><div><p className="text-xs font-semibold uppercase tracking-wide text-brand">Trading terminal</p><h2 className="mt-1 text-lg font-semibold">{chartSymbol}</h2></div><div className="flex flex-wrap items-center gap-2"><button onClick={() => openTrade(chartSymbol)} className="rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand2">Trade {chartSymbol}</button>{["EUR/USD","GBP/USD","USD/JPY","USD/CHF","AUD/USD","USD/CAD","XAU/USD","XAG/USD","USOIL"].map(symbol => <button key={symbol} onClick={() => setChartSymbol(symbol)} className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold ${chartSymbol === symbol ? "bg-brand text-white" : "border border-line bg-panel text-muted hover:text-fg"}`}>{symbol}</button>)}</div></div><div className="mt-3"><TradingViewChart symbol={chartSymbol} /></div></div><OrderPanel symbol={tradeSymbol} price={selectedPrice} freeMargin={freeMargin} onSubmit={submitTrade} /></div><div className="grid gap-6 xl:grid-cols-[1.5fr_.8fr]"><section><div className="mb-4 flex items-center justify-between"><h2 className="text-lg font-semibold">Open Positions</h2><button onClick={() => onTabChange("open")} className="text-sm font-semibold text-brand">View all</button></div><PositionsTable rows={liveOpen.slice(0,4)} open onClose={closeLivePosition} prices={prices} /></section><section className="rounded-2xl border border-line bg-card p-5"><h2 className="text-lg font-semibold">Account snapshot</h2><div className="mt-5 space-y-4 text-sm">{[["Open positions",String(liveOpen.length)],["Closed positions",String(closedPositions.length)],["Base currency","USD"],["Trading status","Paper"]].map(([k,v]) => <div key={k} className="flex justify-between border-b border-line pb-3 last:border-0"><span className="text-muted">{k}</span><span className="font-semibold">{v}</span></div>)}</div></section></div></div>}
+          {tab === "overview" && <div className="mt-8 space-y-6"><TradingViewMarketData onTrade={openTrade} /><div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]"><div className="rounded-2xl border border-line bg-card p-3"><div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-2 pb-3"><div><p className="text-xs font-semibold uppercase tracking-wide text-brand">Trading terminal</p><h2 className="mt-1 text-lg font-semibold">{chartSymbol}</h2></div><div className="flex flex-wrap items-center gap-2"><button onClick={() => openTrade(chartSymbol)} className="rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand2">Trade {chartSymbol}</button>{["EUR/USD","GBP/USD","USD/JPY","USD/CHF","AUD/USD","USD/CAD","XAU/USD","XAG/USD","USOIL"].map(symbol => <button key={symbol} onClick={() => setChartSymbol(symbol)} className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold ${chartSymbol === symbol ? "bg-brand text-white" : "border border-line bg-panel text-muted hover:text-fg"}`}>{symbol}</button>)}</div></div><div className="mt-3"><TradingViewChart symbol={chartSymbol} /></div></div><OrderPanel symbol={tradeSymbol} price={selectedPrice} freeMargin={freeMargin} onSubmit={submitOrder} /></div><div className="grid gap-6 xl:grid-cols-[1.5fr_.8fr]"><section><div className="mb-4 flex items-center justify-between"><h2 className="text-lg font-semibold">Open Positions</h2><button onClick={() => onTabChange("open")} className="text-sm font-semibold text-brand">View all</button></div><PositionsTable rows={liveOpen.slice(0,4)} open onClose={closeLivePosition} prices={prices} /></section><section className="rounded-2xl border border-line bg-card p-5"><h2 className="text-lg font-semibold">Account snapshot</h2><div className="mt-5 space-y-4 text-sm">{[["Open positions",String(liveOpen.length)],["Closed positions",String(closedPositions.length)],["Base currency","USD"],["Trading status","Paper"]].map(([k,v]) => <div key={k} className="flex justify-between border-b border-line pb-3 last:border-0"><span className="text-muted">{k}</span><span className="font-semibold">{v}</span></div>)}</div></section></div></div>}
 
           {tab === "open" && <section className="mt-8 space-y-6"><TradingViewMarketData onTrade={openTrade} /><div><h2 className="mb-4 text-lg font-semibold">Open Positions</h2><PositionsTable rows={liveOpen} open onClose={closeLivePosition} prices={prices} /></div></section>}
           {tab === "closed" && <section className="mt-8"><h2 className="mb-4 text-lg font-semibold">Closed Positions</h2><PositionsTable rows={closedPositions} open={false} prices={prices} /></section>}
