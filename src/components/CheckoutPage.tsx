@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { depositLimits, inr, usd, type DepositMethod, type WithdrawalMethod } from "../config";
-import { useStore } from "../store";
+import { useStore, createDeposit, createWithdrawal } from "../store";
 import { Logo } from "./Sections";
 
 type Mode = "deposit" | "withdraw";
 
 export function CheckoutPage({ mode, onBack, onComplete }: { mode: Mode; onBack: () => void; onComplete: () => void }) {
-  const { account, createDeposit, createWithdrawal } = useStore();
+  const { account } = useStore();
   const [method, setMethod] = useState<DepositMethod | WithdrawalMethod>("UPI");
   const [amount, setAmount] = useState(mode === "deposit" ? "1000" : "");
   const [utr, setUtr] = useState("");
