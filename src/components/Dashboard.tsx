@@ -257,6 +257,18 @@ export function Dashboard({ tab, onTabChange, onHome, onDeposit, onWithdraw, onL
     closePosition(id, exit, positionPnl(position, exit));
   };
 
+  const openTrade = async (symbol: string) => {
+    try {
+      const response = await fetch(`/api/market?symbols=${encodeURIComponent(symbol)}`, { cache: "no-store" });
+      const payload: { data?: MarketPrice[] } = await response.json();
+      const price = payload.data?.find(row => row.symbol === symbol)?.price;
+      if (price === undefined) return;
+      setPrices(prev => ({ ...prev, [symbol]: price }));
+      setMarketStatus("live");
+      setTradeSymbol(symbol);
+    } catch {}
+  };
+
   const submitTrade = (side: "Buy" | "Sell", lots: number, sl?: number, tp?: number) => {
     if (!tradeSymbol) return;
     const entry = prices[tradeSymbol];
@@ -287,7 +299,7 @@ export function Dashboard({ tab, onTabChange, onHome, onDeposit, onWithdraw, onL
 
           <div className="mt-8 flex gap-2 overflow-x-auto border-b border-line pb-2 lg:hidden">{([["overview","Overview"],["open","Open Positions"],["closed","Closed Positions"],["transactions","Transactions"]] as const).map(([id,label]) => <button key={id} onClick={() => onTabChange(id)} className={`whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold ${tab === id ? "bg-brand text-white" : "border border-line bg-card"}`}>{label}</button>)}</div>
 
-          {tab === "overview" && <div className="mt-8 space-y-6"><TradingViewMarketData onTrade={setTradeSymbol} /><TradingViewChart symbol={tradeSymbol ?? "XAU/USD"} /><div className="grid gap-6 xl:grid-cols-[1.5fr_.8fr]"><section><div className="mb-4 flex items-center justify-between"><h2 className="text-lg font-semibold">Open Positions</h2><button onClick={() => onTabChange("open")} className="text-sm font-semibold text-brand">View all</button></div><PositionsTable rows={liveOpen.slice(0,4)} open onClose={closeLivePosition} prices={prices} /></section><section className="rounded-2xl border border-line bg-card p-5"><h2 className="text-lg font-semibold">Account snapshot</h2><div className="mt-5 space-y-4 text-sm">{[["Open positions",String(liveOpen.length)],["Closed positions",String(closedPositions.length)],["Base currency","USD"],["Trading status","Paper"]].map(([k,v]) => <div key={k} className="flex justify-between border-b border-line pb-3 last:border-0"><span className="text-muted">{k}</span><span className="font-semibold">{v}</span></div>)}</div></section></div></div>}
+          {tab === "overview" && <div className="mt-8 space-y-6"><TradingViewMarketData onTrade={openTrade} /><TradingViewChart symbol={tradeSymbol ?? "XAU/USD"} /><div className="grid gap-6 xl:grid-cols-[1.5fr_.8fr]"><section><div className="mb-4 flex items-center justify-between"><h2 className="text-lg font-semibold">Open Positions</h2><button onClick={() => onTabChange("open")} className="text-sm font-semibold text-brand">View all</button></div><PositionsTable rows={liveOpen.slice(0,4)} open onClose={closeLivePosition} prices={prices} /></section><section className="rounded-2xl border border-line bg-card p-5"><h2 className="text-lg font-semibold">Account snapshot</h2><div className="mt-5 space-y-4 text-sm">{[["Open positions",String(liveOpen.length)],["Closed positions",String(closedPositions.length)],["Base currency","USD"],["Trading status","Paper"]].map(([k,v]) => <div key={k} className="flex justify-between border-b border-line pb-3 last:border-0"><span className="text-muted">{k}</span><span className="font-semibold">{v}</span></div>)}</div></section></div></div>}
 
           {tab === "open" && <section className="mt-8 space-y-6"><MarketWatch prices={prices} status={marketStatus} onTrade={setTradeSymbol} /><div><h2 className="mb-4 text-lg font-semibold">Open Positions</h2><PositionsTable rows={liveOpen} open onClose={closeLivePosition} prices={prices} /></div></section>}
           {tab === "closed" && <section className="mt-8"><h2 className="mb-4 text-lg font-semibold">Closed Positions</h2><PositionsTable rows={closedPositions} open={false} prices={prices} /></section>}
