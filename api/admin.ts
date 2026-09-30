@@ -15,8 +15,19 @@ function secretKey() {
 }
 
 // Production admin access is controlled by the Vercel ADMIN_EMAILS allowlist.
+function normalizeEmail(value: unknown) {
+  return String(value ?? "")
+    .normalize("NFKC")
+    .replace(/[\\u200B-\\u200D\\uFEFF]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
 function adminEmails() {
-  return String(process.env.ADMIN_EMAILS || "").split(",").map(value => value.trim().toLowerCase()).filter(Boolean);
+  return String(process.env.ADMIN_EMAILS || "")
+    .split(/[;,\\n]/)
+    .map(normalizeEmail)
+    .filter(Boolean);
 }
 
 async function requireAdmin(req: any) {
@@ -41,8 +52,11 @@ async function requireAdmin(req: any) {
     throw authError;
   }
 
-  const candidates = [data.user.email, data.user.user_metadata?.verified_email, data.user.user_metadata?.email]
-    .filter(Boolean).map(value => String(value).trim().toLowerCase());
+  const candidates = [
+    data.user.email,
+    data.user.user_metadata?.verified_email,
+    data.user.user_metadata?.email,
+  ].map(normalizeEmail).filter(Boolean);
 
   if (!candidates.some(email => adminEmails().includes(email))) {
     const forbidden: any = new Error("Admin access denied.");
