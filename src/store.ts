@@ -83,21 +83,81 @@ function persist() {
   try { localStorage.setItem(storageKey(state.user), JSON.stringify(data)); } catch {}
 }
 
+async function ensureRemoteAccount() {
+  const { data, error } = await supabase.rpc("ensure_paper_account");
+  if (error || !data) return null;
+  const row = Array.isArray(data) ? data[0] : data;
+  return {
+    account: { id: String(row.account_number), balance: Number(row.balance) },
+  };
+}
+
+async function loadRemote(email: string): Promise<PersistedState | null> {
+  const remote = await ensureRemoteAccount();
+  if (!remote) return null;
+
+  const { data: account } = await supabase
+    .from("accounts")
+    .select("account_number,balance")
+    .eq("user_id", (await supabase.auth.getUser()).data.user?.id ?? "")
+    .maybeSingle();
+
+  const userId = (await supabase.auth.getUser()).data.user?.id;
+  if (!userId) return null;
+
+  const [{ data: positions }, { data: transactions }] = await Promise.all([
+    supabase.from("positions").select("*").eq("user_id", userId).order("opened_at", { ascending: false }),
+    supabase.from("transactions").select("*").eq("user_id", userId).order("created_at", { ascending: false }),
+  ]);
+
+  if (!account) return null;
+
+  const openPositions: Position[] = (positions ?? []).filter((p: any) => p.status === "open").map((p: any) => ({
+    id: String(p.id), symbol: p.symbol, side: p.side, lots: Number(p.lots), entry: Number(p.entry),
+    current: Number(p.current), sl: p.sl == null ? undefined : Number(p.sl),
+    tp: p.tp == null ? undefined : Number(p.tp), pnl: Number(p.pnl ?? 0), openedAt: p.opened_at,
+  }));
+
+  const closedPositions: ClosedPosition[] = (positions ?? []).filter((p: any) => p.status === "closed").map((p: any) => ({
+    id: String(p.id), symbol: p.symbol, side: p.side, lots: Number(p.lots), entry: Number(p.entry),
+    current: Number(p.current), sl: p.sl == null ? undefined : Number(p.sl),
+    tp: p.tp == null ? undefined : Number(p.tp), pnl: Number(p.pnl ?? 0),
+    openedAt: p.opened_at, exit: Number(p.exit), closedAt: p.closed_at,
+  }));
+
+  const deposits: Deposit[] = (transactions ?? []).filter((t: any) => t.kind === "deposit").map((t: any) => ({
+    id: String(t.id), method: t.method, amount: Number(t.amount), status: t.status,
+    createdAt: t.created_at, utr: t.reference ?? undefined,
+  }));
+
+  const withdrawals: Withdrawal[] = (transactions ?? []).filter((t: any) => t.kind === "withdrawal").map((t: any) => ({
+    id: String(t.id), method: t.method, amount: Number(t.amount), status: t.status,
+    createdAt: t.created_at, destination: t.destination ?? "",
+  }));
+
+  return {
+    account: { id: String(account.account_number), balance: Number(account.balance) },
+    openPositions, closedPositions, deposits, withdrawals,
+  };
+}
+
 export const useStore = () => useSyncExternalStore(
   cb => { listeners.add(cb); return () => listeners.delete(cb); },
   () => state,
   () => state
 );
 
-supabase.auth.getSession().then(({ data: { session } }) => {
+supabase.auth.getSession().then(async ({ data: { session } }) => {
   const user = session?.user.email ?? null;
-  state = { ...(user ? loadPersisted(user) : blankState), user, ready: true };
+  const remote = user ? await loadRemote(user) : null;
+  state = { ...(remote ?? (user ? loadPersisted(user) : blankState)), user, ready: true };
   emit();
 });
 
-supabase.auth.onAuthStateChange((_event, session) => {
+supabase.auth.onAuthStateChange(async (_event, session) => {
   const user = session?.user.email ?? null;
-  state = { ...(user ? loadPersisted(user) : blankState), user, ready: true };
+  const remote = user ? await loadRemote(user) : null;
+  state = { ...(remote ?? (user ? loadPersisted(user) : blankState)), user, ready: true };
   emit();
 });
 
