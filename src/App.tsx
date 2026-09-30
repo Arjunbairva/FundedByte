@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { evaluationPrograms, type Program } from "./config";
 import { Navbar, Hero, Programs, HowItWorks, Features, Rules, ProfitSplit, FAQ, CTA, Footer } from "./components/Sections";
-import { CheckoutModal } from "./components/CheckoutModal";
 import { AuthModal } from "./components/AuthModal";
 import { Dashboard } from "./components/Dashboard";
-import { addAccount, signOut, useStore } from "./store";
+import { CheckoutPage } from "./components/CheckoutPage";
+import { signOut, useStore } from "./store";
 
 const toDash = () => { location.hash = "#/dashboard"; window.scrollTo(0, 0); };
 const toHome = () => { location.hash = ""; window.scrollTo(0, 0); };
+const toCheckout = (p: Program) => { location.hash = `#/checkout/${encodeURIComponent(p.id)}`; window.scrollTo(0, 0); };
 
 export default function App() {
   const { user, ready } = useStore();
@@ -17,15 +18,18 @@ export default function App() {
   const [route, setRoute] = useState(location.hash);
   useEffect(() => { const f = () => setRoute(location.hash); addEventListener("hashchange", f); return () => removeEventListener("hashchange", f); }, []);
   const onDash = route === "#/dashboard";
-  useEffect(() => { if (ready && onDash && !user) setAuth("login"); }, [ready, onDash, user]);
+  const onCheckout = route.startsWith("#/checkout/");
+  const checkoutId = onCheckout ? decodeURIComponent(route.slice("#/checkout/".length)) : "";
+  const checkoutProgram = evaluationPrograms.find(p => p.id === checkoutId) ?? null;
+  useEffect(() => { if (ready && (onDash || onCheckout) && !user) setAuth("login"); }, [ready, onDash, onCheckout, user]);
 
   const popular = evaluationPrograms.find(p => p.popular) ?? evaluationPrograms[0];
-  const buy = (p: Program) => { if (user) setCheckout(p); else { setPending(p); setAuth("signup"); } };
-  const authed = () => { if (pending) { setCheckout(pending); setPending(null); } else if (onDash) toDash(); };
+  const buy = (p: Program) => { if (user) toCheckout(p); else { setPending(p); setAuth("signup"); } };
+  const authed = () => { if (pending) { const p = pending; setPending(null); toCheckout(p); } else if (onDash) toDash(); };
 
   return (
     <>
-      {onDash && !ready ? <p className="p-10 text-muted">Loading…</p> : onDash && user ? <Dashboard onHome={toHome} /> : (<>
+      {((onDash || onCheckout) && !ready) ? <p className="p-10 text-muted">Loading…</p> : onDash && user ? <Dashboard onHome={toHome} /> : onCheckout && user && checkoutProgram ? <CheckoutPage program={checkoutProgram} onBack={toHome} /> : (<>
         <Navbar user={user} onLogin={() => setAuth("login")} onStart={() => buy(popular)} onDash={toDash} onLogout={signOut} />
         <main id="main">
           <Hero onStart={() => buy(popular)} />
@@ -39,7 +43,6 @@ export default function App() {
         </main>
         <Footer />
       </>)}
-      <CheckoutModal program={checkout} onClose={() => setCheckout(null)} onDone={async p => { const err = await addAccount(p); if (err) alert(err); else toDash(); }} />
       <AuthModal mode={auth} setMode={setAuth} onClose={() => setAuth(null)} onAuthed={authed} />
     </>
   );
