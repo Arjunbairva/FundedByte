@@ -164,13 +164,12 @@ function TradingViewMarketData({ onTrade }: { onTrade: (symbol: string) => void 
   );
 }
 
-function TradeModal({
-  symbol, price, freeMargin, onClose, onSubmit
+function OrderPanel({
+  symbol, price, freeMargin, onSubmit
 }: {
   symbol: string | null;
   price?: number;
   freeMargin: number;
-  onClose: () => void;
   onSubmit: (side: "Buy" | "Sell", lots: number, sl?: number, tp?: number) => void;
 }) {
   const [side, setSide] = useState<"Buy" | "Sell">("Buy");
@@ -183,7 +182,19 @@ function TradeModal({
     setSide("Buy"); setLots("0.10"); setSl(""); setTp(""); setError("");
   }, [symbol]);
 
-  if (!symbol || price === undefined) return null;
+  if (!symbol || price === undefined) {
+    return (
+      <section className="flex min-h-[520px] flex-col justify-center rounded-2xl border border-line bg-card p-6">
+        <p className="text-xs font-semibold uppercase tracking-wide text-brand">Order panel</p>
+        <h2 className="mt-2 text-xl font-semibold">Select an instrument</h2>
+        <p className="mt-2 text-sm leading-6 text-muted">Choose an instrument above, then press Trade to load a live price snapshot and place a paper order.</p>
+        <div className="mt-6 grid grid-cols-2 gap-2 text-xs">
+          <div className="rounded-xl border border-line p-3"><span className="text-muted">Spread</span><p className="mt-1 font-semibold">Zero</p></div>
+          <div className="rounded-xl border border-line p-3"><span className="text-muted">Swap</span><p className="mt-1 font-semibold">Zero</p></div>
+        </div>
+      </section>
+    );
+  }
 
   const digits = priceDigits(symbol);
   const margin = positionMargin({ symbol, side, lots: Number(lots) || 0, entry: price, current: price, pnl: 0, openedAt: "" } as Position, price);
@@ -201,24 +212,32 @@ function TradeModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" role="dialog" aria-modal="true">
-      <div className="w-full max-w-md rounded-2xl border border-line bg-card p-6 shadow-2xl">
-        <div className="flex items-start justify-between"><div><p className="text-xs text-muted">Paper order</p><h2 className="mt-1 text-xl font-semibold">{symbol}</h2></div><button onClick={onClose} className="text-xl text-muted">×</button></div>
-        <div className="mt-5 rounded-xl bg-panel p-4"><p className="text-xs text-muted">Current price</p><p className="mt-1 font-display text-2xl font-bold">{price.toFixed(digits)}</p></div>
-        <div className="mt-5 grid grid-cols-2 gap-2"><button onClick={() => setSide("Buy")} className={`rounded-xl py-3 font-semibold ${side === "Buy" ? "bg-gain text-white" : "border border-line"}`}>Buy</button><button onClick={() => setSide("Sell")} className={`rounded-xl py-3 font-semibold ${side === "Sell" ? "bg-loss text-white" : "border border-line"}`}>Sell</button></div>
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          <label className="text-sm font-medium">Lots<input value={lots} onChange={e => setLots(e.target.value)} type="number" min="0.01" max="100" step="0.01" className="mt-2 w-full rounded-xl border border-line bg-panel px-3 py-3 outline-none focus:border-brand" /></label>
-          <div className="rounded-xl border border-line p-3"><p className="text-xs text-muted">Margin required</p><p className="mt-1 font-semibold">{usd(margin)}</p></div>
-        </div>
-        <div className="mt-3 grid grid-cols-2 gap-3">
-          <label className="text-sm font-medium">Stop loss<input value={sl} onChange={e => setSl(e.target.value)} placeholder="Optional" type="number" step="any" className="mt-2 w-full rounded-xl border border-line bg-panel px-3 py-3 outline-none focus:border-brand" /></label>
-          <label className="text-sm font-medium">Take profit<input value={tp} onChange={e => setTp(e.target.value)} placeholder="Optional" type="number" step="any" className="mt-2 w-full rounded-xl border border-line bg-panel px-3 py-3 outline-none focus:border-brand" /></label>
-        </div>
-        {error && <p className="mt-3 text-sm text-loss">{error}</p>}
-        <button onClick={submit} className={`mt-5 w-full rounded-xl py-3.5 font-semibold text-white ${side === "Buy" ? "bg-gain" : "bg-loss"}`}>{side} {symbol}</button>
-        <p className="mt-3 text-center text-xs text-muted">Paper trading only. TradingView provides the primary market display; a price snapshot is requested only when you open a trade. No broker order is sent.</p>
+    <section className="rounded-2xl border border-line bg-card p-5">
+      <div className="flex items-start justify-between">
+        <div><p className="text-xs font-semibold uppercase tracking-wide text-brand">Order panel</p><h2 className="mt-1 text-xl font-semibold">{symbol}</h2></div>
+        <span className="rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700">LIVE SNAPSHOT</span>
       </div>
-    </div>
+      <div className="mt-5 rounded-xl bg-panel p-4">
+        <p className="text-xs text-muted">Entry price</p>
+        <p className="mt-1 font-display text-3xl font-bold">{price.toFixed(digits)}</p>
+        <div className="mt-2 flex gap-3 text-xs text-muted"><span>Zero Spread</span><span>Zero Swap</span></div>
+      </div>
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <button onClick={() => setSide("Buy")} className={`rounded-xl py-3.5 font-semibold ${side === "Buy" ? "bg-gain text-white" : "border border-line bg-panel"}`}>Buy</button>
+        <button onClick={() => setSide("Sell")} className={`rounded-xl py-3.5 font-semibold ${side === "Sell" ? "bg-loss text-white" : "border border-line bg-panel"}`}>Sell</button>
+      </div>
+      <label className="mt-4 block text-sm font-medium">Lot size
+        <input value={lots} onChange={e => setLots(e.target.value)} type="number" min="0.01" max="100" step="0.01" className="mt-2 w-full rounded-xl border border-line bg-panel px-3 py-3 outline-none focus:border-brand" />
+      </label>
+      <div className="mt-3 grid grid-cols-2 gap-3">
+        <label className="text-sm font-medium">Stop loss<input value={sl} onChange={e => setSl(e.target.value)} placeholder="Optional" type="number" step="any" className="mt-2 w-full rounded-xl border border-line bg-panel px-3 py-3 outline-none focus:border-brand" /></label>
+        <label className="text-sm font-medium">Take profit<input value={tp} onChange={e => setTp(e.target.value)} placeholder="Optional" type="number" step="any" className="mt-2 w-full rounded-xl border border-line bg-panel px-3 py-3 outline-none focus:border-brand" /></label>
+      </div>
+      <div className="mt-4 rounded-xl border border-line p-3"><div className="flex justify-between text-sm"><span className="text-muted">Margin required</span><span className="font-semibold">{usd(margin)}</span></div><div className="mt-2 flex justify-between text-xs"><span className="text-muted">Free margin</span><span>{usd(freeMargin)}</span></div></div>
+      {error && <p className="mt-3 text-sm text-loss">{error}</p>}
+      <button onClick={submit} className={`mt-4 w-full rounded-xl py-3.5 font-semibold text-white ${side === "Buy" ? "bg-gain" : "bg-loss"}`}>{side} {symbol}</button>
+      <p className="mt-3 text-center text-xs text-muted">Paper trading only. No broker order is sent.</p>
+    </section>
   );
 }
 
@@ -302,7 +321,7 @@ export function Dashboard({ tab, onTabChange, onHome, onDeposit, onWithdraw, onL
 
           <div className="mt-8 flex gap-2 overflow-x-auto border-b border-line pb-2 lg:hidden">{([["overview","Overview"],["open","Open Positions"],["closed","Closed Positions"],["transactions","Transactions"]] as const).map(([id,label]) => <button key={id} onClick={() => onTabChange(id)} className={`whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold ${tab === id ? "bg-brand text-white" : "border border-line bg-card"}`}>{label}</button>)}</div>
 
-          {tab === "overview" && <div className="mt-8 space-y-6"><TradingViewMarketData onTrade={openTrade} /><div className="rounded-2xl border border-line bg-card p-3"><div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-2 pb-3"><div><p className="text-xs font-semibold uppercase tracking-wide text-brand">Trading terminal</p><h2 className="mt-1 text-lg font-semibold">{chartSymbol}</h2></div><div className="flex flex-wrap items-center gap-2"><button onClick={() => openTrade(chartSymbol)} className="rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand2">Trade {chartSymbol}</button>{["EUR/USD","GBP/USD","USD/JPY","USD/CHF","AUD/USD","USD/CAD","XAU/USD","XAG/USD","USOIL"].map(symbol => <button key={symbol} onClick={() => setChartSymbol(symbol)} className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold ${chartSymbol === symbol ? "bg-brand text-white" : "border border-line bg-panel text-muted hover:text-fg"}`}>{symbol}</button>)}</div></div><div className="mt-3"><TradingViewChart symbol={chartSymbol} /></div></div><div className="grid gap-6 xl:grid-cols-[1.5fr_.8fr]"><section><div className="mb-4 flex items-center justify-between"><h2 className="text-lg font-semibold">Open Positions</h2><button onClick={() => onTabChange("open")} className="text-sm font-semibold text-brand">View all</button></div><PositionsTable rows={liveOpen.slice(0,4)} open onClose={closeLivePosition} prices={prices} /></section><section className="rounded-2xl border border-line bg-card p-5"><h2 className="text-lg font-semibold">Account snapshot</h2><div className="mt-5 space-y-4 text-sm">{[["Open positions",String(liveOpen.length)],["Closed positions",String(closedPositions.length)],["Base currency","USD"],["Trading status","Paper"]].map(([k,v]) => <div key={k} className="flex justify-between border-b border-line pb-3 last:border-0"><span className="text-muted">{k}</span><span className="font-semibold">{v}</span></div>)}</div></section></div></div>}
+          {tab === "overview" && <div className="mt-8 space-y-6"><TradingViewMarketData onTrade={openTrade} /><div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]"><div className="rounded-2xl border border-line bg-card p-3"><div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-2 pb-3"><div><p className="text-xs font-semibold uppercase tracking-wide text-brand">Trading terminal</p><h2 className="mt-1 text-lg font-semibold">{chartSymbol}</h2></div><div className="flex flex-wrap items-center gap-2"><button onClick={() => openTrade(chartSymbol)} className="rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand2">Trade {chartSymbol}</button>{["EUR/USD","GBP/USD","USD/JPY","USD/CHF","AUD/USD","USD/CAD","XAU/USD","XAG/USD","USOIL"].map(symbol => <button key={symbol} onClick={() => setChartSymbol(symbol)} className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold ${chartSymbol === symbol ? "bg-brand text-white" : "border border-line bg-panel text-muted hover:text-fg"}`}>{symbol}</button>)}</div></div><div className="mt-3"><TradingViewChart symbol={chartSymbol} /></div></div><OrderPanel symbol={tradeSymbol} price={selectedPrice} freeMargin={freeMargin} onSubmit={submitTrade} /></div><div className="grid gap-6 xl:grid-cols-[1.5fr_.8fr]"><section><div className="mb-4 flex items-center justify-between"><h2 className="text-lg font-semibold">Open Positions</h2><button onClick={() => onTabChange("open")} className="text-sm font-semibold text-brand">View all</button></div><PositionsTable rows={liveOpen.slice(0,4)} open onClose={closeLivePosition} prices={prices} /></section><section className="rounded-2xl border border-line bg-card p-5"><h2 className="text-lg font-semibold">Account snapshot</h2><div className="mt-5 space-y-4 text-sm">{[["Open positions",String(liveOpen.length)],["Closed positions",String(closedPositions.length)],["Base currency","USD"],["Trading status","Paper"]].map(([k,v]) => <div key={k} className="flex justify-between border-b border-line pb-3 last:border-0"><span className="text-muted">{k}</span><span className="font-semibold">{v}</span></div>)}</div></section></div></div>}
 
           {tab === "open" && <section className="mt-8 space-y-6"><TradingViewMarketData onTrade={openTrade} /><div><h2 className="mb-4 text-lg font-semibold">Open Positions</h2><PositionsTable rows={liveOpen} open onClose={closeLivePosition} prices={prices} /></div></section>}
           {tab === "closed" && <section className="mt-8"><h2 className="mb-4 text-lg font-semibold">Closed Positions</h2><PositionsTable rows={closedPositions} open={false} prices={prices} /></section>}
@@ -310,7 +329,7 @@ export function Dashboard({ tab, onTabChange, onHome, onDeposit, onWithdraw, onL
         </main>
       </div>
 
-      <TradeModal symbol={tradeSymbol} price={selectedPrice} freeMargin={freeMargin} onClose={() => setTradeSymbol(null)} onSubmit={submitTrade} />
+      
     </div>
   );
 }
