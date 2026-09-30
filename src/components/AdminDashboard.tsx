@@ -56,6 +56,16 @@ export function AdminDashboard({ onHome, onLogout }: { onHome: () => void; onLog
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [signedInEmail, setSignedInEmail] = useState("");
+
+  useEffect(() => {
+    void supabase.auth.getUser().then(({ data }) => {
+      const user = data.user;
+      setSignedInEmail(
+        String(user?.user_metadata?.verified_email || user?.email || "").trim()
+      );
+    });
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -96,7 +106,10 @@ export function AdminDashboard({ onHome, onLogout }: { onHome: () => void; onLog
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 lg:px-8">
           <button onClick={onHome}><Logo /></button>
           <div className="flex items-center gap-3">
-            <span className="rounded-full bg-panel px-3 py-1.5 text-xs font-semibold">Admin Console</span>
+            <div className="text-right">
+              <span className="rounded-full bg-panel px-3 py-1.5 text-xs font-semibold">Admin Console</span>
+              {signedInEmail && <p className="mt-1 text-[11px] text-muted">{signedInEmail}</p>}
+            </div>
             <button onClick={onLogout} className="text-sm text-muted hover:text-fg">Log out</button>
           </div>
         </div>
