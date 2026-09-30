@@ -11,7 +11,7 @@ const Section = ({ children, alt }: { children: ReactNode; alt?: boolean }) => <
 export const Logo = () => <span className="text-xl font-bold tracking-tight">Funded<span className="text-brand">Byte</span></span>;
 const go = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
 
-export function Navbar({ onLogin, onStart }: { onLogin: () => void; onStart: () => void }) {
+export function Navbar({ onLogin, onStart, user, onDash, onLogout }: { onLogin: () => void; onStart: () => void; user?: string | null; onDash?: () => void; onLogout?: () => void }) {
   const [open, setOpen] = useState(false);
   const links: [string, string][] = [["Programs", "programs"], ["How It Works", "how"], ["Rules", "rules"], ["FAQ", "faq"]];
   return (
@@ -22,8 +22,7 @@ export function Navbar({ onLogin, onStart }: { onLogin: () => void; onStart: () 
           {links.map(([l, id]) => <li key={id}><button onClick={() => go(id)} className="hover:text-fg transition">{l}</button></li>)}
         </ul>
         <div className="hidden items-center gap-3 md:flex">
-          <button onClick={onLogin} className="px-3 py-2 text-sm text-muted hover:text-fg">Login</button>
-          <button onClick={onStart} className={btnP}>Start Evaluation</button>
+          {user ? <><button onClick={onLogout} className="px-3 py-2 text-sm text-muted hover:text-fg">Logout</button><button onClick={onDash} className={btnP}>Dashboard</button></> : <><button onClick={onLogin} className="px-3 py-2 text-sm text-muted hover:text-fg">Login</button><button onClick={onStart} className={btnP}>Start Evaluation</button></>}
         </div>
         <button className="md:hidden p-2" aria-expanded={open} aria-label="Toggle menu" onClick={() => setOpen(!open)}>
           <span className="block h-0.5 w-6 bg-fg mb-1.5" /><span className="block h-0.5 w-6 bg-fg mb-1.5" /><span className="block h-0.5 w-6 bg-fg" />
@@ -32,7 +31,7 @@ export function Navbar({ onLogin, onStart }: { onLogin: () => void; onStart: () 
       {open && (
         <div className="border-t border-line bg-panel px-5 py-4 md:hidden">
           {links.map(([l, id]) => <button key={id} onClick={() => { setOpen(false); go(id); }} className="block w-full py-3 text-left text-muted">{l}</button>)}
-          <div className="mt-3 grid grid-cols-2 gap-3"><button onClick={() => { setOpen(false); onLogin(); }} className={btnS}>Login</button><button onClick={() => { setOpen(false); onStart(); }} className={btnP}>Start Evaluation</button></div>
+          <div className="mt-3 grid grid-cols-2 gap-3">{user ? <><button onClick={() => { setOpen(false); onLogout?.(); }} className={btnS}>Logout</button><button onClick={() => { setOpen(false); onDash?.(); }} className={btnP}>Dashboard</button></> : <><button onClick={() => { setOpen(false); onLogin(); }} className={btnS}>Login</button><button onClick={() => { setOpen(false); onStart(); }} className={btnP}>Start Evaluation</button></>}</div>
         </div>
       )}
     </header>
