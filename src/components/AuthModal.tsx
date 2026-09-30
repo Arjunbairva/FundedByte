@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Dialog } from "./Dialog";
-import { sendPhoneOtp, signIn, signInWithGoogle, signUp, verifyPhoneOtp } from "../store";
+import { signIn, signInWithGoogle, signUp } from "../store";
 
 export function AuthModal({ mode, onClose, setMode }: { mode: "login" | "signup" | null; onClose: () => void; setMode: (m: "login" | "signup") => void }) {
   const [message, setMessage] = useState<string | null>(null);
@@ -19,23 +19,6 @@ export function AuthModal({ mode, onClose, setMode }: { mode: "login" | "signup"
     if (result.error) {
       setBusy(false);
       setMessage(result.error);
-    }
-  };
-
-  const phoneSubmit = async () => {
-    setBusy(true);
-    setMessage(null);
-    const result = otpSent
-      ? await verifyPhoneOtp(phone, document.getElementById("fundedbytes-phone-otp") instanceof HTMLInputElement ? document.getElementById("fundedbytes-phone-otp")!.value.trim() : "")
-      : await sendPhoneOtp(phone.trim());
-    setBusy(false);
-    if (result.error) return setMessage(result.error);
-    if (otpSent) {
-      onClose();
-      location.hash = "#/deposit";
-    } else {
-      setOtpSent(true);
-      setMessage("OTP sent. Enter the 6-digit code.");
     }
   };
 
@@ -67,41 +50,22 @@ export function AuthModal({ mode, onClose, setMode }: { mode: "login" | "signup"
           <p className="text-muted">After confirmation, return here and log in.</p>
           <button className="w-full rounded-xl border border-line px-4 py-3 font-semibold" onClick={() => { setConfirmed(false); setMode("login"); }}>Back to login</button>
         </div>
-      ) : phoneMode ? (
+      ) : (
         <div className="space-y-4">
-          <div>
-            <p className="text-sm font-medium">Phone number</p>
-            <input
-              value={phone}
-              onChange={e => setPhone(e.target.value)}
-              type="tel"
-              inputMode="tel"
-              autoComplete="tel"
-              placeholder="+91 9876543210"
-              disabled={otpSent}
-              className={input + " mt-2"}
-            />
-            <p className="mt-1 text-xs text-muted">Use international format, e.g. +91...</p>
+          <div className="rounded-xl border border-line bg-panel px-4 py-4 text-sm">
+            <p className="font-semibold">Continue with Phone</p>
+            <p className="mt-1 text-muted">Verify your mobile number securely with Phone.Email.</p>
           </div>
-          {otpSent && (
-            <div>
-              <p className="text-sm font-medium">Verification code</p>
-              <input
-                id="fundedbytes-phone-otp"
-                type="text"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                maxLength={6}
-                placeholder="123456"
-                className={input + " mt-2"}
-              />
-            </div>
-          )}
-          {message && <p className="text-sm text-loss" role="alert">{message}</p>}
-          <button type="button" disabled={busy || !phone.trim()} onClick={phoneSubmit} className="w-full rounded-xl bg-brand py-3.5 font-semibold text-white hover:bg-brand2 disabled:opacity-60">
-            {busy ? "Please wait…" : otpSent ? "Verify & continue" : "Send OTP"}
+          <button
+            type="button"
+            className="w-full rounded-xl border border-line bg-white px-4 py-3 font-semibold text-slate-800 hover:bg-slate-50"
+            onClick={() => {
+              window.location.href = "https://www.phone.email/auth/log-in?client_id=YOUR_PHONE_EMAIL_CLIENT_ID&redirect_url=" + encodeURIComponent(window.location.href);
+            }}
+          >
+            Continue with Phone
           </button>
-          <button type="button" className="w-full text-xs text-muted hover:text-fg" onClick={() => { setPhoneMode(false); setOtpSent(false); setMessage(null); }}>
+          <button type="button" className="w-full text-xs text-muted hover:text-fg" onClick={() => { setPhoneMode(false); setMessage(null); }}>
             Back to email / Google
           </button>
         </div>
