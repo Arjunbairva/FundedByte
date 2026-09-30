@@ -18,7 +18,7 @@ function LiveMarketsWidget() {
     widget.setAttribute("symbol-sectors", JSON.stringify([
       {
         sectionName: "Forex",
-        symbols: ["FX:EURUSD", "FX:GBPUSD", "FX:USDJPY"],
+        symbols: ["FX:EURUSD", "FX:GBPUSD", "FX:USDJPY", "FX:USDCHF", "FX:AUDUSD", "FX:USDCAD"],
       },
       {
         sectionName: "Commodities",
