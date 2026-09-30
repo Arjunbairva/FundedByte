@@ -1,48 +1,65 @@
 import { useEffect, useState } from "react";
-import { evaluationPrograms, type Program } from "./config";
-import { Navbar, Hero, Programs, HowItWorks, Features, Rules, ProfitSplit, FAQ, CTA, Footer } from "./components/Sections";
+import { Dashboard, type DashboardTab } from "./components/Dashboard";
 import { AuthModal } from "./components/AuthModal";
-import { Dashboard } from "./components/Dashboard";
+import { Navbar, HomePage, Footer } from "./components/Sections";
 import { CheckoutPage } from "./components/CheckoutPage";
-import { signOut, useStore } from "./store";
+import { useStore, signOut } from "./store";
 
-const toDash = () => { location.hash = "#/dashboard"; window.scrollTo(0, 0); };
-const toHome = () => { location.hash = ""; window.scrollTo(0, 0); };
-const toCheckout = (p: Program) => { location.hash = `#/checkout/${encodeURIComponent(p.id)}`; window.scrollTo(0, 0); };
+type Route = "home" | "dashboard" | "deposit" | "withdraw";
+
+const routeFromHash = (): Route => {
+  switch (location.hash) {
+    case "#/dashboard": return "dashboard";
+    case "#/deposit": return "deposit";
+    case "#/withdraw": return "withdraw";
+    default: return "home";
+  }
+};
+
+const navigate = (route: Route) => {
+  location.hash = route === "home" ? "" : `#/${route}`;
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
 
 export default function App() {
   const { user, ready } = useStore();
-  const [pending, setPending] = useState<Program | null>(null);
+  const [route, setRoute] = useState<Route>(routeFromHash());
   const [auth, setAuth] = useState<"login" | "signup" | null>(null);
-  const [route, setRoute] = useState(location.hash);
-  useEffect(() => { const f = () => setRoute(location.hash); addEventListener("hashchange", f); return () => removeEventListener("hashchange", f); }, []);
-  const onDash = route === "#/dashboard";
-  const onCheckout = route.startsWith("#/checkout/");
-  const checkoutId = onCheckout ? decodeURIComponent(route.slice("#/checkout/".length)) : "";
-  const checkoutProgram = evaluationPrograms.find(p => p.id === checkoutId) ?? null;
-  useEffect(() => { if (ready && (onDash || onCheckout) && !user) { if (onCheckout && checkoutProgram) setPending(checkoutProgram); setAuth("login"); } }, [ready, onDash, onCheckout, user, checkoutProgram]);
+  const [dashboardTab, setDashboardTab] = useState<DashboardTab>("overview");
 
-  const popular = evaluationPrograms.find(p => p.popular) ?? evaluationPrograms[0];
-  const buy = (p: Program) => { if (user) toCheckout(p); else { setPending(p); setAuth("signup"); } };
-  const authed = () => { if (pending) { const p = pending; setPending(null); toCheckout(p); } else if (onDash) toDash(); };
+  useEffect(() => {
+    const onHash = () => setRoute(routeFromHash());
+    addEventListener("hashchange", onHash);
+    return () => removeEventListener("hashchange", onHash);
+  }, []);
+
+  useEffect(() => {
+    if (ready && route !== "home" && !user) setAuth("login");
+  }, [ready, route, user]);
+
+  const goHome = () => navigate("home");
+  const goDashboard = () => navigate("dashboard");
+  const goDeposit = () => navigate("deposit");
+  const goWithdraw = () => navigate("withdraw");
+
+  if (route === "dashboard" && user) {
+    return <Dashboard tab={dashboardTab} onTabChange={setDashboardTab} onHome={goHome} onDeposit={goDeposit} onWithdraw={goWithdraw} onLogout={() => { signOut(); goHome(); }} />;
+  }
+
+  if (route === "deposit" && user) {
+    return <CheckoutPage mode="deposit" onBack={goDashboard} onComplete={goDashboard} />;
+  }
+
+  if (route === "withdraw" && user) {
+    return <CheckoutPage mode="withdraw" onBack={goDashboard} onComplete={goDashboard} />;
+  }
 
   return (
     <>
-      {((onDash || onCheckout) && !ready) ? <p className="p-10 text-muted">Loading…</p> : onDash && user ? <Dashboard onHome={toHome} /> : onCheckout && user && checkoutProgram ? <CheckoutPage program={checkoutProgram} onBack={toHome} /> : (<>
-        <Navbar user={user} onLogin={() => setAuth("login")} onStart={() => buy(popular)} onDash={toDash} onLogout={signOut} />
-        <main id="main">
-          <Hero onStart={() => buy(popular)} />
-          <Programs onBuy={buy} />
-          <HowItWorks />
-          <Features />
-          <Rules />
-          <ProfitSplit />
-          <FAQ />
-          <CTA onStart={() => buy(popular)} />
-        </main>
-        <Footer />
-      </>)}
-      <AuthModal mode={auth} setMode={setAuth} onClose={() => setAuth(null)} onAuthed={authed} />
+      <Navbar user={user} onLogin={() => setAuth("login")} onSignup={() => setAuth("signup")} onDashboard={goDashboard} onLogout={() => { signOut(); goHome(); }} />
+      <HomePage onOpenDashboard={goDashboard} onDeposit={goDeposit} />
+      <Footer />
+      <AuthModal mode={auth} setMode={setAuth} onClose={() => setAuth(null)} />
     </>
   );
 }

@@ -1,30 +1,20 @@
-# FundedByte (frontend prototype)
+# FundedBytes
 
-## Run locally
+Focused FX and commodities trading-platform MVP.
 
-Copy `.env.example` to `.env.local` (already filled in for the Supabase project), then:
+## Stack
+React + TypeScript + Vite + Tailwind CSS + Supabase Auth.
 
-```bash
-npm install
-npm run dev
-```
+## v1
+- Main website
+- Login / registration
+- Dashboard with balance, equity, margin and P&L
+- Open and closed positions
+- Deposit: UPI P2P QR (manual team verification)
+- Deposit: USDT BSC / BEP-20
+- Withdrawal: UPI and USDT
+- Transaction history
+- Provider-ready separation for future market-data, payments and execution integrations
 
-## Project
-
-React + TypeScript + Vite + Tailwind CSS.
-
-- Pricing, rules and FAQ: `src/config.ts`
-- Payment integration hook: `startPayment()` in `src/components/CheckoutModal.tsx`
-- Authentication hook: `onSubmit` in `src/components/AuthModal.tsx`
-
-## What's included
-
-- Marketing site: hero, programs, rules, profit split, FAQ
-- Supabase email/password auth and database (`accounts`, `trades`, Row Level Security)
-- Checkout that calls `create_demo_account` to create a demo evaluation account (no payment)
-- Trader dashboard at `#/dashboard`: equity curve, profit target / drawdown progress, status, trade history (simulated data)
-- State lives in `src/store.ts`
-
-## Not connected yet
-
-Payments, account provisioning, trading platform data, KYC, payouts and an admin panel. Once payments exist, revoke `execute` on `create_demo_account` and provision accounts server-side.
+## Important
+The current branch is an MVP integration shell. Deposit/withdrawal records and sample trading positions are local client state; they are not a production payment ledger or live execution system. Real-money operation requires the client's approved payment, custody, execution and compliance infrastructure.
