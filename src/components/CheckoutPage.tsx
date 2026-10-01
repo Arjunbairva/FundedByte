@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { depositLimits, inr, usd, type DepositMethod, type WithdrawalMethod } from "../config";
+import { depositBonus, depositLimits, inr, paymentDetails, usd, type DepositMethod, type WithdrawalMethod } from "../config";
 import { useStore, createDeposit, createWithdrawal } from "../store";
 import { Logo } from "./Sections";
 
@@ -8,7 +8,7 @@ type Mode = "deposit" | "withdraw";
 export function CheckoutPage({ mode, onBack, onComplete }: { mode: Mode; onBack: () => void; onComplete: () => void }) {
   const { account } = useStore();
   const [method, setMethod] = useState<DepositMethod | WithdrawalMethod>("UPI");
-  const [amount, setAmount] = useState(mode === "deposit" ? "1000" : "");
+  const [amount, setAmount] = useState(mode === "deposit" ? "950" : "");
   const [utr, setUtr] = useState("");
   const [upi, setUpi] = useState("");
   const [wallet, setWallet] = useState("");
@@ -27,7 +27,8 @@ export function CheckoutPage({ mode, onBack, onComplete }: { mode: Mode; onBack:
     }
 
     if (mode === "deposit") {
-      await createDeposit({ method: method as DepositMethod, amount: value, utr: utr.trim() || undefined });
+      const depositUsd = isUpi ? value / depositBonus.upiExchangeRate : value;
+      await createDeposit({ method: method as DepositMethod, amount: Number(depositUsd.toFixed(2)), utr: utr.trim() || undefined });
       setSubmitted(true);
       return;
     }
@@ -85,14 +86,14 @@ export function CheckoutPage({ mode, onBack, onComplete }: { mode: Mode; onBack:
               {["UPI", "USDT_BEP20"].map(x => (
                 <button key={x} onClick={() => setMethod(x as DepositMethod | WithdrawalMethod)} className={`rounded-2xl border p-5 text-left ${method === x ? "border-brand ring-2 ring-brand/10" : "border-line bg-card"}`}>
                   <p className="font-semibold">{x === "UPI" ? "UPI P2P QR" : "USDT · BSC / BEP-20"}</p>
-                  <p className="mt-1 text-xs text-muted">{x === "UPI" ? "Minimum ₹1,000" : "Minimum $20"}</p>
+                  <p className="mt-1 text-xs text-muted">{x === "UPI" ? "Minimum ₹950 ($10)" : "Minimum $20"}</p>
                 </button>
               ))}
             </div>
 
             <form onSubmit={submit} className="mt-6 space-y-5">
               <label className="block text-sm font-medium">
-                Amount
+                {mode === "deposit" ? (isUpi ? "Amount (INR)" : "Amount (USDT)") : "Amount (USD)"}
                 <input inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} className="mt-2 w-full rounded-xl border border-line bg-card px-4 py-3 text-xl font-semibold outline-none focus:border-brand" />
               </label>
 
@@ -122,7 +123,10 @@ export function CheckoutPage({ mode, onBack, onComplete }: { mode: Mode; onBack:
                   <p className="font-semibold">P2P UPI checkout</p>
                   <p className="mt-1 text-sm text-muted">Scan the payment QR supplied by the payment team, complete the transfer in your UPI app, then submit your UTR for verification.</p>
                   <div className="mt-4 grid place-items-center rounded-xl bg-panel p-8">
-                    <div className="grid h-48 w-48 place-items-center border-4 border-fg bg-white text-center text-xs font-semibold">UPI QR<br/>will be configured</div>
+                    <img src="/upi-fundbytes.svg" alt="FundedBytes UPI QR" className="h-48 w-48" />
+                  </div>
+                  <p className="mt-4 text-center font-mono text-sm">{paymentDetails.upiId}</p>
+                  <p className="mt-2 text-center text-xs text-muted">Pay the INR amount shown above. ₹950 = $10 account funding before the 100% bonus.</p>
                   </div>
                 </div>
               )}
@@ -131,7 +135,10 @@ export function CheckoutPage({ mode, onBack, onComplete }: { mode: Mode; onBack:
                 <div className="rounded-2xl border border-line bg-card p-5">
                   <p className="font-semibold">USDT deposit</p>
                   <p className="mt-1 text-sm text-muted">Network: BSC / BEP-20</p>
-                  <div className="mt-4 rounded-xl bg-panel p-4 text-sm font-mono break-all">CLIENT_USDT_BEP20_ADDRESS</div>
+                  <div className="mt-4 grid place-items-center rounded-xl bg-panel p-5">
+                    <img src="/usdt-bep20-fundbytes.svg" alt="FundedBytes USDT BEP-20 QR" className="h-48 w-48" />
+                  </div>
+                  <p className="mt-3 rounded-xl bg-panel p-4 text-sm font-mono break-all">{paymentDetails.usdtBep20Address}</p>
                   <p className="mt-3 text-xs text-muted">Send USDT only on BSC / BEP-20 and retain the transaction hash for verification.</p>
                 </div>
               )}
