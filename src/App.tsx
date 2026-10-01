@@ -36,6 +36,7 @@ export default function App() {
   const [route, setRoute] = useState<Route>(routeFromHash());
   const [auth, setAuth] = useState<"login" | "signup" | null>(null);
   const [dashboardTab, setDashboardTab] = useState<DashboardTab>("overview");
+  const [pendingRoute, setPendingRoute] = useState<Route | null>(null);
 
   const hasStartedFunding = deposits.length > 0;
 
@@ -48,6 +49,13 @@ export default function App() {
   useEffect(() => {
     if (!ready || !user) return;
 
+    if (pendingRoute) {
+      const destination = pendingRoute;
+      setPendingRoute(null);
+      navigate(destination);
+      return;
+    }
+
     // Google OAuth returns to the normal URL so Supabase can consume its
     // access-token fragment without colliding with our hash router.
     if (new URLSearchParams(location.search).get("oauth") === "google") {
@@ -59,11 +67,25 @@ export default function App() {
     if (route === "dashboard" && !hasStartedFunding) {
       navigate("deposit");
     }
-  }, [ready, user, route, hasStartedFunding]);
+  }, [ready, user, route, hasStartedFunding, pendingRoute]);
 
   const goHome = () => navigate("home");
-  const goDashboard = () => navigate("dashboard");
-  const goDeposit = () => navigate("deposit");
+  const goDashboard = () => {
+    if (user) {
+      navigate("dashboard");
+      return;
+    }
+    setPendingRoute("dashboard");
+    setAuth("signup");
+  };
+  const goDeposit = () => {
+    if (user) {
+      navigate("deposit");
+      return;
+    }
+    setPendingRoute("deposit");
+    setAuth("signup");
+  };
   const goWithdraw = () => navigate("withdraw");
   const goAdmin = () => navigate("admin");
 
