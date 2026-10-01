@@ -121,13 +121,88 @@ export default async function handler(req: any, res: any) {
       return;
     }
 
-    const { data, error } = await client.rpc("admin_review_transaction", {
-      p_transaction_id: transactionId,
-      p_action: action,
-    });
-    if (error) throw new Error(error.message);
+    const { data: transaction, error: transactionError } = await client
+      .from("transactions")
+      .select("id,user_id,kind,amount,status")
+      .eq("id", transactionId)
+      .maybeSingle();
 
-    json(res, 200, data ?? { ok: true });
+    if (transactionError) throw new Error(transactionError.message);
+    if (!transaction) {
+      json(res, 404, { error: "Transaction not found." });
+      return;
+    }
+    if (transaction.status !== "Pending") {
+      json(res, 409, { error: "Only pending transactions can be reviewed." });
+      return;
+    }
+
+    if (action === "reject") {
+      const { error } = await client
+        .from("transactions")
+        .update({ status: "Rejected" })
+        .eq("id", transactionId)
+        .eq("status", "Pending");
+      if (error) throw new Error(error.message);
+      json(res, 200, { ok: true, status: "Rejected" });
+      return;
+    }
+
+    const amount = Number(transaction.amount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      json(res, 400, { error: "Invalid transaction amount." });
+      return;
+    }
+
+    const { data: account, error: accountError } = await client
+      .from("accounts")
+      .select("id,user_id,balance")
+      .eq("user_id", transaction.user_id)
+      .maybeSingle();
+
+    if (accountError) throw new Error(accountError.message);
+    if (!account) {
+      json(res, 404, { error: "Trading account not found." });
+      return;
+    }
+
+    const isDeposit = transaction.kind === "deposit";
+    const isWithdrawal = transaction.kind === "withdrawal";
+    if (!isDeposit && !isWithdrawal) {
+      json(res, 400, { error: "Unsupported transaction type." });
+      return;
+    }
+
+    const nextBalance = isDeposit
+      ? Number(account.balance) + amount * 2
+      : Number(account.balance) - amount;
+
+    if (isWithdrawal && nextBalance < 0) {
+      json(res, 400, { error: "Insufficient account balance for this withdrawal." });
+      return;
+    }
+
+    const { error: transactionUpdateError } = await client
+      .from("transactions")
+      .update({ status: "Approved" })
+      .eq("id", transactionId)
+      .eq("status", "Pending");
+
+    if (transactionUpdateError) throw new Error(transactionUpdateError.message);
+
+    const { error: accountUpdateError } = await client
+      .from("accounts")
+      .update({ balance: nextBalance, updated_at: new Date().toISOString() })
+      .eq("id", account.id);
+
+    if (accountUpdateError) throw new Error(accountUpdateError.message);
+
+    json(res, 200, {
+      ok: true,
+      status: "Approved",
+      balance: nextBalance,
+      bonus: isDeposit ? amount : 0,
+    });
   } catch (error) {
     const status = Number((error as any)?.status) || 500;
     console.error("Admin API error:", error);
