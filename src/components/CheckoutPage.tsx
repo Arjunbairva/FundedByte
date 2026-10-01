@@ -130,11 +130,21 @@ export function CheckoutPage({ mode, onBack, onComplete }: { mode: Mode; onBack:
                     <p className="text-xs text-muted">{isUpi ? "₹950–₹9,500" : "$20–$100"}</p>
                     <button
                       type="button"
-                      disabled={!enteredAmount || enteredAmount < minimum || enteredAmount > maximum}
-                      onClick={() => { setError(null); setAmountConfirmed(true); }}
-                      className="rounded-lg bg-brand px-4 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
+                      onClick={() => {
+                        setError(null);
+                        if (amountConfirmed) {
+                          setAmountConfirmed(false);
+                          return;
+                        }
+                        if (!enteredAmount || enteredAmount < minimum || enteredAmount > maximum) {
+                          setError(isUpi ? "Enter an amount between ₹950 and ₹9,500." : "Enter an amount between $20 and $100.");
+                          return;
+                        }
+                        setAmountConfirmed(true);
+                      }}
+                      className="rounded-lg bg-brand px-4 py-2 text-xs font-semibold text-white hover:bg-brand2"
                     >
-                      {amountConfirmed ? "Amount confirmed" : "Confirm amount"}
+                      {amountConfirmed ? "Change amount" : "Confirm amount"}
                     </button>
                   </div>
                 )}
