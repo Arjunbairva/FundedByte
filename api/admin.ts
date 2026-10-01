@@ -14,37 +14,16 @@ function secretKey() {
   return process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 }
 
-// Production admin access is controlled by the Vercel ADMIN_EMAILS allowlist.
+// Production admin access is restricted to the single FundedBytes administrator.
+const ADMIN_EMAIL = "arjunbairva02@gmail.com";
+
 function normalizeEmail(value: unknown) {
   return String(value ?? "")
     .normalize("NFKC")
     .replace(/[\u200B-\u200D\uFEFF]/g, "")
     .replace(/\s+/g, "")
-    .replace(/^ADMIN_EMAILS\s*=\s*/i, "")
     .replace(/^["'`]+|["'`]+$/g, "")
     .toLowerCase();
-}
-
-function adminEmails() {
-  const raw = String(process.env.ADMIN_EMAILS || "").trim();
-  if (!raw) return [];
-
-  const values: string[] = [];
-
-  try {
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) {
-      values.push(...parsed.map(value => String(value ?? "")));
-    } else if (typeof parsed === "string") {
-      values.push(parsed);
-    }
-  } catch {
-    // Support the normal comma/newline/semicolon format below.
-  }
-
-  values.push(...raw.split(/[;,\n]/));
-
-  return [...new Set(values.map(value => normalizeEmail(value)).filter(Boolean))];
 }
 
 async function requireAdmin(req: any) {
@@ -75,19 +54,10 @@ async function requireAdmin(req: any) {
     data.user.user_metadata?.email,
   ].map(normalizeEmail).filter(Boolean);
 
-  const configuredAdminEmails = adminEmails();
-
-  // Prefer the verified identity supplied by Phone.Email for this project.
-  // The browser never controls this value; it comes from the authenticated
-  // Supabase user record returned by getUser(accessToken).
-  const isAllowed = candidates.some(email => configuredAdminEmails.includes(email));
+  const isAllowed = candidates.includes(normalizeEmail(ADMIN_EMAIL));
 
   if (!isAllowed) {
-    const forbidden: any = new Error(
-      configuredAdminEmails.length
-        ? "Admin access denied: the authenticated user was verified, but the Production ADMIN_EMAILS comparison failed."
-        : "Admin access denied: ADMIN_EMAILS is not available to this Production function."
-    );
+    const forbidden: any = new Error("Admin access denied.");
     forbidden.status = 403;
     throw forbidden;
   }
