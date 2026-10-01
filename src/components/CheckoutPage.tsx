@@ -90,8 +90,17 @@ export function CheckoutPage({ mode, onBack, onComplete }: { mode: Mode; onBack:
             <div className="mt-7 grid gap-3 sm:grid-cols-2">
               {["UPI", "USDT_BEP20"].map(x => (
                 <button key={x} onClick={() => setMethod(x as DepositMethod | WithdrawalMethod)} className={`rounded-2xl border p-5 text-left ${method === x ? "border-brand ring-2 ring-brand/10" : "border-line bg-card"}`}>
-                  <p className="font-semibold">{x === "UPI" ? "UPI P2P QR" : "USDT · BSC / BEP-20"}</p>
-                  <p className="mt-1 text-xs text-muted">{x === "UPI" ? "₹950–₹9,500 ($10–$100)" : "$20–$100"}</p>
+                  <div className="flex items-center gap-3">
+                    {x === "UPI" ? (
+                      <div className="grid h-10 w-10 place-items-center rounded-xl bg-white text-xs font-black text-[#1677ff] shadow-sm">UPI</div>
+                    ) : (
+                      <div className="grid h-10 w-10 place-items-center rounded-xl bg-[#f0b90b] text-lg font-black text-[#0b0e11] shadow-sm">◆</div>
+                    )}
+                    <div>
+                      <p className="font-semibold">{x === "UPI" ? "UPI P2P QR" : "USDT · BSC / BEP-20"}</p>
+                      <p className="mt-1 text-xs text-muted">{x === "UPI" ? "₹950–₹9,500 ($10–$100)" : "$20–$100"}</p>
+                    </div>
+                  </div>
                 </button>
               ))}
             </div>
@@ -130,7 +139,12 @@ export function CheckoutPage({ mode, onBack, onComplete }: { mode: Mode; onBack:
                   <div className="mt-4 grid place-items-center rounded-xl bg-panel p-8">
                     <img src="/upi-fundbytes.svg" alt="FundedBytes UPI QR" className="h-48 w-48" />
                   </div>
-                  <p className="mt-4 text-center font-mono text-sm">{paymentDetails.upiId}</p>
+                  <div className="mt-4 flex flex-wrap items-center justify-center gap-2" aria-label="UPI apps">
+                    {["GPay", "PhonePe", "Paytm", "BHIM"].map(app => (
+                      <span key={app} className="rounded-lg border border-line bg-panel px-2.5 py-1.5 text-[11px] font-semibold text-muted">{app}</span>
+                    ))}
+                  </div>
+                  <p className="mt-3 text-center font-mono text-sm">{paymentDetails.upiId}</p>
                   <p className="mt-2 text-center text-xs text-muted">Pay the INR amount shown above. ₹950 = $10 account funding before the 100% bonus.</p>
                 </div>
               )}
@@ -138,7 +152,10 @@ export function CheckoutPage({ mode, onBack, onComplete }: { mode: Mode; onBack:
               {mode === "deposit" && !isUpi && (
                 <div className="rounded-2xl border border-line bg-card p-5">
                   <p className="font-semibold">USDT deposit</p>
-                  <p className="mt-1 text-sm text-muted">Network: BSC / BEP-20</p>
+                  <div className="mt-1 flex items-center gap-2 text-sm text-muted">
+                    <span className="grid h-7 w-7 place-items-center rounded-full bg-[#f0b90b] text-xs font-black text-[#0b0e11]">◆</span>
+                    <span>BNB Chain · BSC / BEP-20</span>
+                  </div>
                   <div className="mt-4 grid place-items-center rounded-xl bg-panel p-5">
                     <img src="/usdt-bep20-fundbytes.svg" alt="FundedBytes USDT BEP-20 QR" className="h-48 w-48" />
                   </div>
