@@ -195,7 +195,8 @@ export function CheckoutPage({ mode, onBack, onComplete }: { mode: Mode; onBack:
                       <span key={app} className="rounded-lg border border-line bg-panel px-2.5 py-1.5 text-[11px] font-semibold text-muted">{app}</span>
                     ))}
                   </div>
-                  <p className="mt-3 text-center font-mono text-sm">{paymentDetails.upiId}</p>
+                  <p className="mt-3 text-center text-sm font-semibold">Pay UPI ID: <span className="font-mono font-bold">{paymentDetails.upiId}</span></p>
+                  <p className="mt-2 text-center text-xs font-medium text-muted">Use UPI ID if QR is not working: <span className="font-mono font-bold text-fg">{paymentDetails.upiId}</span></p>
                   <p className="mt-2 text-center text-xs text-muted">Pay the INR amount shown above. ₹950 = $10 account funding before the 100% bonus.</p>
                 </div>
               )}
