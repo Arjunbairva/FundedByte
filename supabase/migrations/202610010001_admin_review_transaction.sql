@@ -51,7 +51,9 @@ begin
   end if;
 
   if v_tx.kind = 'deposit' then
-    v_next_balance := v_account.balance + v_tx.amount;
+    -- FundedBytes currently offers a 100% deposit bonus:
+    -- $10 deposited => $10 bonus => $20 total account credit.
+    v_next_balance := v_account.balance + (v_tx.amount * 2);
   elsif v_tx.kind = 'withdrawal' then
     if v_account.balance < v_tx.amount then
       raise exception 'Insufficient account balance for this withdrawal';
