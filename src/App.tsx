@@ -4,9 +4,10 @@ import { AuthModal } from "./components/AuthModal";
 import { Navbar, HomePage, Footer } from "./components/Sections";
 import { CheckoutPage } from "./components/CheckoutPage";
 import { AdminDashboard } from "./components/AdminDashboard";
+import { LegalPageView, type LegalPage } from "./components/LegalPages";
 import { useStore, signOut } from "./store";
 
-type Route = "home" | "dashboard" | "deposit" | "withdraw" | "admin";
+type Route = "home" | "dashboard" | "deposit" | "withdraw" | "admin" | LegalPage;
 
 const routeFromHash = (): Route => {
   switch (location.hash) {
@@ -14,6 +15,13 @@ const routeFromHash = (): Route => {
     case "#/deposit": return "deposit";
     case "#/withdraw": return "withdraw";
     case "#/admin": return "admin";
+    case "#/terms": return "terms";
+    case "#/privacy": return "privacy";
+    case "#/refund": return "refund";
+    case "#/risk": return "risk";
+    case "#/aml": return "aml";
+    case "#/cookies": return "cookies";
+    case "#/complaints": return "complaints";
     default: return "home";
   }
 };
@@ -58,6 +66,10 @@ export default function App() {
   const goDeposit = () => navigate("deposit");
   const goWithdraw = () => navigate("withdraw");
   const goAdmin = () => navigate("admin");
+
+  if (["terms","privacy","refund","risk","aml","cookies","complaints"].includes(route)) {
+    return <LegalPageView page={route as LegalPage} onHome={goHome} />;
+  }
 
   if (route === "admin" && user) {
     return <AdminDashboard onHome={goHome} onLogout={() => { signOut(); goHome(); }} />;
