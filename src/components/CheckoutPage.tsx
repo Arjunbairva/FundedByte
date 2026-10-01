@@ -98,7 +98,7 @@ export function CheckoutPage({ mode, onBack, onComplete }: { mode: Mode; onBack:
 
             <div className="mt-7 grid gap-3 sm:grid-cols-2">
               {["UPI", "USDT_BEP20"].map(x => (
-                <button key={x} onClick={() => setMethod(x as DepositMethod | WithdrawalMethod)} className={`rounded-2xl border p-5 text-left ${method === x ? "border-brand ring-2 ring-brand/10" : "border-line bg-card"}`}>
+                <button key={x} onClick={() => { setMethod(x as DepositMethod | WithdrawalMethod); setAmountConfirmed(false); setError(null); }} className={`rounded-2xl border p-5 text-left ${method === x ? "border-brand ring-2 ring-brand/10" : "border-line bg-card"}`}>
                   <div className="flex items-center gap-3">
                     {x === "UPI" ? (
                       <div className="grid h-10 w-10 place-items-center rounded-xl bg-white text-xs font-black text-[#1677ff] shadow-sm">UPI</div>
