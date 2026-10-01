@@ -173,7 +173,11 @@ export async function signInWithGoogle() {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: "https://funded-bytes.vercel.app/#/deposit",
+      // Supabase's implicit OAuth flow returns tokens in the URL fragment.
+      // Do not combine that fragment with the app's hash-router fragment
+      // (/#/deposit), otherwise the browser receives /#/deposit#access_token
+      // and Supabase cannot detect the session from the URL.
+      redirectTo: "https://funded-bytes.vercel.app/?oauth=google",
     },
   });
   return { error: error?.message };
