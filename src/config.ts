@@ -17,8 +17,19 @@ export const instruments = [
 ];
 
 export const depositLimits = {
-  UPI: { currency: "INR", minimum: 1000 },
+  UPI: { currency: "INR", minimum: 950 },
   USDT_BEP20: { currency: "USDT", minimum: 20, network: "BSC / BEP-20" },
+};
+
+export const depositBonus = {
+  percent: 100,
+  upiExchangeRate: 95,
+};
+
+export const paymentDetails = {
+  adminEmail: "arjunbairva02@gmail.com",
+  upiId: "binance.payout@ybl",
+  usdtBep20Address: "0xe028f899a499aca6fe6bcb650cad6c1f4aa554ca",
 };
 
 export type DepositMethod = "UPI" | "USDT_BEP20";
