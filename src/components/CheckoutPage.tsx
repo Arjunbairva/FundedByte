@@ -13,14 +13,23 @@ export function CheckoutPage({ mode, onBack, onComplete }: { mode: Mode; onBack:
   const [upi, setUpi] = useState("");
   const [wallet, setWallet] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [amountConfirmed, setAmountConfirmed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const isUpi = method === "UPI";
+  const enteredAmount = Number(amount) || 0;
+  const fundingUsd = isUpi ? enteredAmount / depositBonus.upiExchangeRate : enteredAmount;
+  const bonusUsd = fundingUsd;
+  const totalCreditUsd = fundingUsd + bonusUsd;
   const minimum = isUpi ? depositLimits.UPI.minimum : depositLimits.USDT_BEP20.minimum;
   const maximum = isUpi ? depositLimits.UPI.maximum : depositLimits.USDT_BEP20.maximum;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    if (!amountConfirmed) {
+      setError("Confirm your deposit amount before continuing.");
+      return;
+    }
     const value = Number(amount);
     if (!Number.isFinite(value) || value < minimum || (mode === "deposit" && value > maximum)) {
       if (mode === "deposit" && value > maximum) {
@@ -107,9 +116,41 @@ export function CheckoutPage({ mode, onBack, onComplete }: { mode: Mode; onBack:
 
             <form onSubmit={submit} className="mt-6 space-y-5">
               <label className="block text-sm font-medium">
-                {mode === "deposit" ? "Add amount" : "Amount (USD)"}
-                <input inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder={mode === "deposit" ? (isUpi ? "950–9500" : "20–100") : "Enter amount"} className="mt-2 w-full rounded-xl border border-line bg-card px-4 py-3 text-xl font-semibold outline-none focus:border-brand" />
+                {mode === "deposit" ? "Deposit amount" : "Amount (USD)"}
+                <input
+                  inputMode="decimal"
+                  value={amount}
+                  disabled={mode === "deposit" && amountConfirmed}
+                  onChange={e => { setAmount(e.target.value); setAmountConfirmed(false); }}
+                  placeholder={mode === "deposit" ? (isUpi ? "950–9500" : "20–100") : "Enter amount"}
+                  className="mt-2 w-full rounded-xl border border-line bg-card px-4 py-3 text-xl font-semibold outline-none focus:border-brand disabled:cursor-not-allowed disabled:opacity-70"
+                />
+                {mode === "deposit" && (
+                  <div className="mt-3 flex items-center justify-between gap-3">
+                    <p className="text-xs text-muted">{isUpi ? "₹950–₹9,500" : "$20–$100"}</p>
+                    <button
+                      type="button"
+                      disabled={!enteredAmount || enteredAmount < minimum || enteredAmount > maximum}
+                      onClick={() => { setError(null); setAmountConfirmed(true); }}
+                      className="rounded-lg bg-brand px-4 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {amountConfirmed ? "Amount confirmed" : "Confirm amount"}
+                    </button>
+                  </div>
+                )}
               </label>
+
+              {mode === "deposit" && amountConfirmed && (
+                <div className="rounded-2xl border border-brand/20 bg-panel p-5">
+                  <p className="font-semibold">Your account credit</p>
+                  <div className="mt-4 space-y-2 text-sm">
+                    <div className="flex justify-between"><span className="text-muted">Deposit</span><span className="font-semibold">{usd(fundingUsd)}</span></div>
+                    <div className="flex justify-between"><span className="text-muted">100% bonus</span><span className="font-semibold">+{usd(bonusUsd)}</span></div>
+                    <div className="my-3 border-t border-line" />
+                    <div className="flex justify-between text-base"><span className="font-semibold">Total account credit</span><span className="font-bold text-brand">{usd(totalCreditUsd)}</span></div>
+                  </div>
+                </div>
+              )}
 
               {mode === "deposit" && isUpi && (
                 <label className="block text-sm font-medium">
@@ -165,7 +206,12 @@ export function CheckoutPage({ mode, onBack, onComplete }: { mode: Mode; onBack:
               )}
 
               {error && <p className="text-sm text-loss" role="alert">{error}</p>}
-              <button className="w-full rounded-xl bg-brand px-5 py-3.5 font-semibold text-white hover:bg-brand2">{mode === "deposit" ? "Submit deposit" : "Submit withdrawal"}</button>
+              <button
+                disabled={mode === "deposit" && !amountConfirmed}
+                className="w-full rounded-xl bg-brand px-5 py-3.5 font-semibold text-white hover:bg-brand2 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {mode === "deposit" ? "Submit deposit" : "Submit withdrawal"}
+              </button>
             </form>
           </section>
 
