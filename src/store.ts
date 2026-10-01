@@ -173,7 +173,7 @@ export async function signInWithGoogle() {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: "https://funded-byte.vercel.app/#/deposit",
+      redirectTo: "https://funded-bytes.vercel.app/#/deposit",
     },
   });
   return { error: error?.message };
