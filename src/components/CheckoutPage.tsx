@@ -127,7 +127,6 @@ export function CheckoutPage({ mode, onBack, onComplete }: { mode: Mode; onBack:
                   </div>
                   <p className="mt-4 text-center font-mono text-sm">{paymentDetails.upiId}</p>
                   <p className="mt-2 text-center text-xs text-muted">Pay the INR amount shown above. ₹950 = $10 account funding before the 100% bonus.</p>
-                  </div>
                 </div>
               )}
 
