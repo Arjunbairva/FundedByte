@@ -38,7 +38,15 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!ready || !user || route === "home") return;
+    if (!ready || !user) return;
+
+    // Google OAuth returns to the normal URL so Supabase can consume its
+    // access-token fragment without colliding with our hash router.
+    if (new URLSearchParams(location.search).get("oauth") === "google") {
+      history.replaceState(null, "", location.pathname);
+      navigate("deposit");
+      return;
+    }
 
     if (route === "dashboard" && !hasStartedFunding) {
       navigate("deposit");
