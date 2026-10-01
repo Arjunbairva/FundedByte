@@ -17,8 +17,8 @@ export const instruments = [
 ];
 
 export const depositLimits = {
-  UPI: { currency: "INR", minimum: 950 },
-  USDT_BEP20: { currency: "USDT", minimum: 20, network: "BSC / BEP-20" },
+  UPI: { currency: "INR", minimum: 950, maximum: 9500 },
+  USDT_BEP20: { currency: "USDT", minimum: 20, maximum: 100, network: "BSC / BEP-20" },
 };
 
 export const depositBonus = {
