@@ -16,13 +16,18 @@ export function CheckoutPage({ mode, onBack, onComplete }: { mode: Mode; onBack:
   const [error, setError] = useState<string | null>(null);
   const isUpi = method === "UPI";
   const minimum = isUpi ? depositLimits.UPI.minimum : depositLimits.USDT_BEP20.minimum;
+  const maximum = isUpi ? depositLimits.UPI.maximum : depositLimits.USDT_BEP20.maximum;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     const value = Number(amount);
-    if (!Number.isFinite(value) || value < minimum) {
-      setError(`Minimum amount is ${isUpi ? inr(minimum) : "$" + minimum}`);
+    if (!Number.isFinite(value) || value < minimum || (mode === "deposit" && value > maximum)) {
+      if (mode === "deposit" && value > maximum) {
+        setError(`Maximum amount is ${isUpi ? inr(maximum) : "$" + maximum}`);
+      } else {
+        setError(`Minimum amount is ${isUpi ? inr(minimum) : "$" + minimum}`);
+      }
       return;
     }
 
@@ -86,15 +91,15 @@ export function CheckoutPage({ mode, onBack, onComplete }: { mode: Mode; onBack:
               {["UPI", "USDT_BEP20"].map(x => (
                 <button key={x} onClick={() => setMethod(x as DepositMethod | WithdrawalMethod)} className={`rounded-2xl border p-5 text-left ${method === x ? "border-brand ring-2 ring-brand/10" : "border-line bg-card"}`}>
                   <p className="font-semibold">{x === "UPI" ? "UPI P2P QR" : "USDT · BSC / BEP-20"}</p>
-                  <p className="mt-1 text-xs text-muted">{x === "UPI" ? "Minimum ₹950 ($10)" : "Minimum $20"}</p>
+                  <p className="mt-1 text-xs text-muted">{x === "UPI" ? "₹950–₹9,500 ($10–$100)" : "$20–$100"}</p>
                 </button>
               ))}
             </div>
 
             <form onSubmit={submit} className="mt-6 space-y-5">
               <label className="block text-sm font-medium">
-                {mode === "deposit" ? (isUpi ? "Amount (INR)" : "Amount (USDT)") : "Amount (USD)"}
-                <input inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} className="mt-2 w-full rounded-xl border border-line bg-card px-4 py-3 text-xl font-semibold outline-none focus:border-brand" />
+                {mode === "deposit" ? "Add amount" : "Amount (USD)"}
+                <input inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder={mode === "deposit" ? (isUpi ? "950–9500" : "20–100") : "Enter amount"} className="mt-2 w-full rounded-xl border border-line bg-card px-4 py-3 text-xl font-semibold outline-none focus:border-brand" />
               </label>
 
               {mode === "deposit" && isUpi && (
@@ -152,7 +157,7 @@ export function CheckoutPage({ mode, onBack, onComplete }: { mode: Mode; onBack:
               <h2 className="text-lg font-semibold">Transaction summary</h2>
               <div className="mt-5 space-y-3 text-sm">
                 <div className="flex justify-between"><span className="text-muted">Method</span><span className="font-semibold">{isUpi ? "UPI P2P" : "USDT BEP-20"}</span></div>
-                <div className="flex justify-between"><span className="text-muted">Minimum</span><span className="font-semibold">{isUpi ? inr(depositLimits.UPI.minimum) : "$20"}</span></div>
+                <div className="flex justify-between"><span className="text-muted">Range</span><span className="font-semibold">{isUpi ? "₹950–₹9,500" : "$20–$100"}</span></div>
                 <div className="flex justify-between"><span className="text-muted">Amount</span><span className="font-semibold">{isUpi ? inr(Number(amount) || 0) : usd(Number(amount) || 0)}</span></div>
                 {mode === "withdraw" && <div className="flex justify-between"><span className="text-muted">Available</span><span className="font-semibold">{usd(account.balance)}</span></div>}
               </div>
